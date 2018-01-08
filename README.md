@@ -2,7 +2,9 @@
 Airflow setup for ETL
 
 ## Install
-<pre>pip install airflow
+<pre>pip install "apache-airflow"
+pip install "apache-airflow[s3]"
+pip install cryptography
 </pre>
 
 ## Config
@@ -17,8 +19,17 @@ airflow version # it will init default files in the AIRFLOW_HOME
 # init db
 airflow initdb
 
+# start worker
+airflow worker
+
 # start server
-airflow webserver 
+airflow webserver
+
+# start scheduler
+airflow scheduler
+
+# kill everything running
+pkill -f airflow
 </pre>
 
 ## Getting start

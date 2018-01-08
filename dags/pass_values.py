@@ -40,15 +40,14 @@ t1 = PythonOperator(
     task_id='task_1',
     dag=dag,
     python_callable=task_1,
-    op_kwargs=dag_input,
-    xcom_push=True
+    op_kwargs=dag_input
 )
 t2 = PythonOperator(
     task_id='task_2',
     dag=dag,
     python_callable=task_2,
-    op_kwargs=dag_input,
-    xcom_push=True)
+    op_kwargs=dag_input
+)
 
 #t1 >> t2
 t2.set_upstream(t1)

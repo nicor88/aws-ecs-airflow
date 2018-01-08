@@ -66,8 +66,7 @@ t1 = PythonOperator(
     task_id='task_1',
     dag=dag,
     python_callable=task_1,
-    op_kwargs=dag_input,
-    xcom_push=True
+    op_kwargs=dag_input
 )
 
 t2 = PythonOperator(
@@ -75,14 +74,14 @@ t2 = PythonOperator(
     dag=dag,
     python_callable=task_2,
     op_kwargs=dag_input,
-    xcom_push=True)
+    )
 
 t3 = PythonOperator(
     task_id='task_3',
     dag=dag,
     python_callable=task_3,
     op_kwargs=dag_input,
-    xcom_push=True)
+    )
 
 t3.set_upstream([t1, t2])
 
@@ -92,7 +91,7 @@ t4 = PythonOperator(
     dag=dag,
     python_callable=task_4,
     op_kwargs=dag_input,
-    xcom_push=True)
+    )
 
 t4.set_upstream(t3)
 
@@ -102,14 +101,14 @@ t5 = PythonOperator(
     dag=dag,
     python_callable=task_5,
     op_kwargs=dag_input,
-    xcom_push=True)
+    )
 
 t6 = PythonOperator(
     task_id='task_6',
     dag=dag,
     python_callable=task_6,
     op_kwargs=dag_input,
-    xcom_push=True)
+    )
 
 t4.set_downstream([t5, t6])
 
@@ -118,13 +117,13 @@ t7 = PythonOperator(
     dag=dag,
     python_callable=task_7,
     op_kwargs=dag_input,
-    xcom_push=True)
+    )
 
 t8 = PythonOperator(
     task_id='task_8',
     dag=dag,
     python_callable=task_8,
     op_kwargs=dag_input,
-    xcom_push=True)
+)
 
 t8.set_upstream([t5, t6, t7])

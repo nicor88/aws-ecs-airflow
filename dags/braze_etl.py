@@ -24,7 +24,7 @@ def get_max_source_populated_at(**kwargs):
     print(kwargs)
     hook = PostgresHook(postgres_conn_id='redshift_nicola',
                         schema='dev')
-    sql = 'SELECT max(source_populated_at) FROM dwh.braze_campaigns_analytics_fact_dev'
+    sql = 'SELECT max(source_populated_at) FROM nico_dev.braze_campaigns_analytics_fact'
     max_source_populated_at = hook.get_first(sql, parameters=None)[0] or datetime(2017, 1, 1)
     output = {'max_source_populated_at': max_source_populated_at}
     log.info(output)
@@ -39,8 +39,8 @@ def extract_data(**kwargs):
     hook = PostgresHook(postgres_conn_id='redshift_nicola',
                         schema='dev', keepalives_idle=60)
     sql = """SELECT * FROM 
-             dwh.braze_campaigns_analytics_fact 
-             WHERE source_populated_at >= %(max_source_populated_at)s"""
+             braze.campaigns_analytics
+             WHERE populated_at >= %(max_source_populated_at)s"""
     result_df = hook.get_pandas_df(sql, parameters={'max_source_populated_at': max_source_populated_at})
     file_name = f'{uuid.uuid4()}_{datetime.now().strftime("%Y%m%d_%H%M%S")}_braze_etl_source.pkl'
     result_df.to_pickle(file_name)

@@ -101,12 +101,13 @@ ENV/
 .mypy_cache/
 
 # Airflow
-
 airflow.cfg
 airflow.db
 airflow-webserver.pid
 unittests.cfg
 logs
+
+postgres_data/
 
 # PyCharm
 .idea

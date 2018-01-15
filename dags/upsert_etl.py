@@ -41,8 +41,9 @@ def insert_to_staging(**kwargs):
     logger.info(result)
 
 
+# run every
 dag = DAG('braze_etl_with_upsert', description='ETL to replace Matillion Braze ETL',
-          schedule_interval='0 0 1 * *', catchup=False, default_args=default_args)
+          schedule_interval='0 9 * * *', catchup=False, default_args=default_args)
 
 truncate_table_task = PostgresOperator(
     task_id='truncate_staging_table',

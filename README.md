@@ -12,6 +12,8 @@ Setup in `.bashrc` or `.zshrc ` your `AIRFLOW_HOME` e.g.
 </pre>
 
 ## Init and Start
+
+### Locally
 <pre># check the version
 airflow version # it will init default files in the AIRFLOW_HOME
 
@@ -31,10 +33,14 @@ airflow scheduler
 pkill -f airflow
 </pre>
 
-## Getting start
-* create a folder called `dags` inside `AIRFLOW_HOME`
-* create a job inside `hello_world.py`
-* `airflow scheduler`
+### Docker
+<pre># start docker daemon
+# run docker compose
+docker-compose up -d
+
+# stop docleker compose
+docker-compose down
+</pre>
 
 ## Resources
 

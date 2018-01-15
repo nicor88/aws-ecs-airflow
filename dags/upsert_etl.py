@@ -1,9 +1,3 @@
-# truncate staging table: eg. staging.braze_campaigns_analytics;
-# get max_populated_at from destination table: dwh.braze_campaigns_analytics_fact_dev;
-# insert to staging.braze_campaigns_analytics the records from braze.braze_campaigns_analytics with a populated_at > max_populated_at
-# delete from dwh.braze_campaigns_analytics_fact_dev the records that join staging.braze_campaigns_analytics with date_sk,campaign_id,variation_name, message_type
-# Insert in dwh.braze_campaigns_analytics_fact_dev all the rows from staging
-
 from datetime import datetime
 import logging
 
@@ -12,7 +6,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.postgres_operator import PostgresOperator
 from airflow.hooks.postgres_hook import PostgresHook
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 default_args = {
     'owner': 'nicor88',
@@ -29,7 +23,7 @@ def get_max_source_populated_at(**kwargs):
     max_source_populated_at = hook.get_first(sql, parameters=None)[0] or datetime(2016, 12, 31)
     output = {'max_source_populated_at': max_source_populated_at}
     kwargs['ti'].xcom_push(key='output', value=output)
-    log.info(output)
+    logger.info(output)
     return output
 
 
@@ -37,14 +31,14 @@ def insert_to_staging(**kwargs):
     ti = kwargs['ti']
     max_source_populated_at = ti.xcom_pull(key='return_value', task_ids='get_max_source_populated_at').get(
         'max_source_populated_at')
-    log.info(max_source_populated_at)
+    logger.info(max_source_populated_at)
     hook = PostgresHook(postgres_conn_id='redshift_nicola',
                         schema='dev', keepalives_idle=60)
     sql = """INSERT INTO nico_dev.staging_braze_campaigns_analytics
               SELECT * FROM braze.campaigns_analytics
               WHERE populated_at > %(max_source_populated_at)s"""
     result = hook.run(sql, True, parameters={'max_source_populated_at': max_source_populated_at})
-    log.info(result)
+    logger.info(result)
 
 
 dag = DAG('braze_etl_with_upsert', description='ETL to replace Matillion Braze ETL',

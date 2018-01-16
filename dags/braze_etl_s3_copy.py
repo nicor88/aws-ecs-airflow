@@ -49,7 +49,7 @@ def extract_data(**kwargs):
     kwargs['ti'].xcom_push(key='df_pickle_file', value=file_name)
     return {'df_pickle_file': file_name}
 
-
+# TODO load to S3
 def transform_data(**kwargs):
     ti = kwargs['ti']
     source_df_file_path = ti.xcom_pull(key='df_pickle_file', task_ids='extract_data')
@@ -62,7 +62,7 @@ def transform_data(**kwargs):
     kwargs['ti'].xcom_push(key='df_pickle_file', value=transform_df_file_path)
     return {'df_pickle_file': transform_df_file_path}
 
-
+# COPY data from S3
 def load_data(**kwargs):
     ti = kwargs['ti']
     transformed_df_file_path = ti.xcom_pull(key='df_pickle_file', task_ids='transform_data')
@@ -70,7 +70,6 @@ def load_data(**kwargs):
     log.info(len(transformed_df))
     hook = PostgresHook(postgres_conn_id='redshift_nicola',
                         schema='dev', keepalives_idle=30)
-
     # keys = list(df.keys())
     # log.info(keys)
     # rows = [tuple(row) for row in list(df.itertuples(index=False))]
@@ -78,7 +77,7 @@ def load_data(**kwargs):
     # hook.insert_rows('dwh.braze_campaigns_analytics_fact_dev', rows, keys, commit_every=100)
 
 
-dag = DAG('braze_etl', description='ETL to replace Matillion Braze ETL',
+dag = DAG('braze_etl_s3_copy', description='ETL to replace Matillion Braze ETL',
           schedule_interval='0 0 1 * *', catchup=False, default_args=default_args)
 
 get_max_source_populated_at_task = PythonOperator(

@@ -49,6 +49,7 @@ def extract_data(**kwargs):
     kwargs['ti'].xcom_push(key='df_pickle_file', value=file_name)
     return {'df_pickle_file': file_name}
 
+
 # TODO load to S3
 def transform_data(**kwargs):
     ti = kwargs['ti']
@@ -62,7 +63,8 @@ def transform_data(**kwargs):
     kwargs['ti'].xcom_push(key='df_pickle_file', value=transform_df_file_path)
     return {'df_pickle_file': transform_df_file_path}
 
-# COPY data from S3
+
+# TODO COPY data from S3
 def load_data(**kwargs):
     ti = kwargs['ti']
     transformed_df_file_path = ti.xcom_pull(key='df_pickle_file', task_ids='transform_data')

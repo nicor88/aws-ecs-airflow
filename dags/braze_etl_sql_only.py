@@ -41,7 +41,7 @@ def insert_to_staging(**kwargs):
     logger.info(result)
 
 
-# run every day at 10:15
+# run every day at 9:15 UTC (means at 10:15 Berlin Time)
 dag = DAG('braze_etl_sql_only', description='ETL to replace Matillion Braze ETL',
           schedule_interval='15 9 * * *', catchup=False, default_args=default_args)
 

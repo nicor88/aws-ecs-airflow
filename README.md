@@ -34,6 +34,13 @@ pkill -f airflow
 </pre>
 
 ### Docker
+
+#### Build
+<pre>
+docker build --rm -t nicor88/docker-airflow .
+</ore>
+
+#### Run
 <pre># start docker daemon
 # run docker compose
 docker-compose up -d

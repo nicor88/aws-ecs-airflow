@@ -16,7 +16,7 @@ services:
           - 5432:5432
 
     webserver:
-        image: puckel/docker-airflow:1.9.0
+        image: nicor88/docker-airflow:1.9.0
         restart: always
         depends_on:
             - postgres
@@ -42,7 +42,7 @@ services:
             retries: 3
 
     flower:
-        image: puckel/docker-airflow:1.9.0
+        image: nicor88/docker-airflow:1.9.0
         restart: always
         depends_on:
             - redis
@@ -54,7 +54,7 @@ services:
         command: flower
 
     scheduler:
-        image: puckel/docker-airflow:1.9.0
+        image: nicor88/docker-airflow:1.9.0
         restart: always
         depends_on:
             - webserver
@@ -71,7 +71,7 @@ services:
         command: scheduler
 
     worker:
-        image: puckel/docker-airflow:1.9.0
+        image: nicor88/docker-airflow:1.9.0
         restart: always
         depends_on:
             - scheduler

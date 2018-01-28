@@ -6,8 +6,8 @@ TRY_LOOP="20"
 : "${REDIS_PORT:="6379"}"
 : "${REDIS_PASSWORD:=""}"
 
-: "${POSTGRES_HOST:="postgres"}"
-: "${POSTGRES_PORT:="5432"}"
+: "${POSTGRES_HOST:="postgres"}" # name of the docker hostname
+: "${POSTGRES_PORT:="5432"}" # in ecs this becomes tcp://172.17.0.3:5432, helpfull in case is needed the ip
 : "${POSTGRES_USER:="airflow"}"
 : "${POSTGRES_PASSWORD:="airflow"}"
 : "${POSTGRES_DB:="airflow"}"
@@ -70,6 +70,10 @@ AIRFLOW__CELERY__CELERY_RESULT_BACKEND="db+postgresql://$POSTGRES_USER:$POSTGRES
 
 case "$1" in
   webserver)
+    echo debugging
+    echo $POSTGRES_HOST
+    echo $POSTGRES_PORT
+    echo $AIRFLOW__CORE__SQL_ALCHEMY_CONN
     wait_for_port "Postgres" "$POSTGRES_HOST" "$POSTGRES_PORT"
     wait_for_redis
     airflow initdb

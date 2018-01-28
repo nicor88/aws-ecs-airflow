@@ -5,7 +5,9 @@
       "image": "redis:3.2.7",
       "essential": true,
       "command": [
-        "redis-server", "--requirepass", "redispass"
+        "redis-server",
+        "--requirepass",
+        "redispass"
       ],
       "memory": 1000,
       "cpu": 500
@@ -25,6 +27,14 @@
         {
           "name": "POSTGRES_DB",
           "value": "airflow"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "value": "airflow"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "value": "5432"
         }
       ],
       "portMappings": [
@@ -72,6 +82,14 @@
         {
           "name": "REDIS_PASSWORD",
           "value": "redispass"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
         }
       ],
       "portMappings": [
@@ -88,9 +106,9 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "airflow",
+          "awslogs-group": "airflow-webserver",
           "awslogs-region": "eu-west-1",
-          "awslogs-stream-prefix": "airflow-webserver"
+          "awslogs-stream-prefix": "webserver"
         }
       }
     },
@@ -130,13 +148,29 @@
         {
           "name": "REDIS_PASSWORD",
           "value": "redispass"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
         }
       ],
       "command": [
         "scheduler"
       ],
       "memory": 500,
-      "cpu": 200
+      "cpu": 200,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "airflow-scheduler",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "scheduler"
+        }
+      }
     },
     {
       "name": "worker",
@@ -170,14 +204,35 @@
         {
           "name": "REDIS_PASSWORD",
           "value": "redispass"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
         }
       ],
       "command": [
         "worker"
       ],
       "memory": 500,
-      "cpu": 200
+      "cpu": 200,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "airflow-worker",
+          "awslogs-region": "eu-west-1",
+          "awslogs-stream-prefix": "worker"
+        }
+      }
     }
   ],
-  "family": "airflow"
+  "family": "airflow",
+  "volumes": [],
+  "placementConstraints": [],
+  "networkMode": "bridge",
+  "memory": null,
+  "cpu": null
 }

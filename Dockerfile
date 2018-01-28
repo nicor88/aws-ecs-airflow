@@ -71,6 +71,8 @@ RUN set -ex \
 COPY entrypoint.sh /entrypoint.sh
 COPY airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
+ADD dags ${AIRFLOW_HOME}/dags
+
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793

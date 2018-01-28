@@ -49,6 +49,16 @@ docker-compose up -d
 docker-compose down
 </pre>
 
+### ECS/ECR
+<pre>
+aws ecr get-login --no-include-email --region eu-west-1 --profile nicor88
+# run the login command return by the command above
+docker build --rm=True -t airflow .
+
+docker tag airflow:latest 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:latest
+docker push 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:latest
+</pre>
+
 ## Resources
 
 ### Articles

@@ -10,7 +10,7 @@
         "redispass"
       ],
       "memory": 1000,
-      "cpu": 500
+      "cpu": 400
     },
     {
       "name": "postgres",
@@ -44,12 +44,12 @@
         }
       ],
       "memory": 2000,
-      "cpu": 1000,
+      "cpu": 700,
       "essential": true
     },
     {
       "name": "webserver",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.1",
       "links": [
         "postgres",
         "redis"
@@ -114,7 +114,7 @@
     },
     {
       "name": "scheduler",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.1",
       "essential": true,
       "links": [
         "postgres",
@@ -161,8 +161,8 @@
       "command": [
         "scheduler"
       ],
-      "memory": 500,
-      "cpu": 200,
+      "memory": 1000,
+      "cpu": 300,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -174,7 +174,7 @@
     },
     {
       "name": "worker",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.1",
       "essential": true,
       "links": [
         "postgres",
@@ -217,8 +217,8 @@
       "command": [
         "worker"
       ],
-      "memory": 500,
-      "cpu": 200,
+      "memory": 1000,
+      "cpu": 300,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {

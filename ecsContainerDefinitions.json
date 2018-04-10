@@ -49,7 +49,7 @@
     },
     {
       "name": "webserver",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.1",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.3",
       "links": [
         "postgres",
         "redis"
@@ -114,7 +114,7 @@
     },
     {
       "name": "scheduler",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.1",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.3",
       "essential": true,
       "links": [
         "postgres",
@@ -174,7 +174,7 @@
     },
     {
       "name": "worker",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.1",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.3",
       "essential": true,
       "links": [
         "postgres",

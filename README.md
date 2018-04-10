@@ -1,37 +1,7 @@
 # airflow-etl
 Airflow setup for ETL
 
-## Install
-<pre>pip install "apache-airflow"
-pip install "apache-airflow[postgres,s3]"
-</pre>
-
-## Config
-Setup in `.bashrc` or `.zshrc ` your `AIRFLOW_HOME` e.g.
-<pre>export AIRFLOW_HOME=/Users/your_user/airflow-etl
-</pre>
-
 ## Init and Start
-
-### Locally
-<pre># check the version
-airflow version # it will init default files in the AIRFLOW_HOME
-
-# init db
-airflow initdb
-
-# start worker
-airflow worker
-
-# start server
-airflow webserver
-
-# start scheduler
-airflow scheduler
-
-# kill everything running
-pkill -f airflow
-</pre>
 
 ### Docker
 

@@ -68,8 +68,8 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-COPY entrypoint.sh /entrypoint.sh
-COPY airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY config/entrypoint.sh /entrypoint.sh
+COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
 ADD dags ${AIRFLOW_HOME}/dags
 

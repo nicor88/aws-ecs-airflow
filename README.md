@@ -30,6 +30,7 @@ docker push 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow
 ## Resources
 
 ### Articles
+* [Developing Workflows with Apache Airflow](http://michal.karzynski.pl/blog/2017/03/19/developing-workflows-with-apache-airflow/)
 * [Installing Apache Airflow on Ubuntu/AWS](https://medium.com/a-r-g-o/installing-apache-airflow-on-ubuntu-aws-6ebac15db211)
 * [A Guide On How To Build An Airflow Server/Cluster](https://stlong0521.github.io/20161023%20-%20Airflow.html)
 * [ETL Pipelines With Airflow](http://michael-harmon.com/blog/AirflowETL.html)

@@ -29,8 +29,8 @@ def get_max_source_populated_at(**kwargs):
 
 def insert_to_staging(**kwargs):
     ti = kwargs['ti']
-    max_source_populated_at = ti.xcom_pull(key='return_value', task_ids='get_max_source_populated_at').get(
-        'max_source_populated_at')
+    max_source_populated_at = ti.xcom_pull(key='return_value',
+                                           task_ids='get_max_source_populated_at').get('max_source_populated_at')
     logger.info(max_source_populated_at)
     hook = PostgresHook(postgres_conn_id='redshift_nicola',
                         schema='dev', keepalives_idle=60)

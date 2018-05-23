@@ -1,87 +1,85 @@
 version: '2.1'
 services:
-    redis:
-        image: 'redis:3.2.7'
-        command: redis-server --requirepass redispass
+  redis:
+    image: 'redis:3.2.7'
+    command: redis-server --requirepass redispass
 
-    postgres:
-        image: postgres:9.6
-        environment:
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-        volumes:
-            - ./postgres_data:/var/lib/postgresql/data
-        ports:
-          - 5432:5432
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
-    webserver:
-        image: nicor88/docker-airflow:1.9.0
-        restart: always
-        depends_on:
-            - postgres
-            - redis
-        environment:
-            - LOAD_EX=n
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-            - EXECUTOR=Celery
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-            - REDIS_PASSWORD=redispass
+  webserver:
+    image: nicor88/docker-airflow:1.9.0
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - EXECUTOR=Celery
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+      - REDIS_PASSWORD=redispass
 
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-        ports:
-            - "8080:8080"
-        command: webserver
-        healthcheck:
-            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
-            interval: 30s
-            timeout: 30s
-            retries: 3
+    volumes:
+        - ./dags:/usr/local/airflow/dags
+    ports:
+        - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
 
-    flower:
-        image: nicor88/docker-airflow:1.9.0
-        restart: always
-        depends_on:
-            - redis
-        environment:
-            - EXECUTOR=Celery
-            - REDIS_PASSWORD=redispass
-        ports:
-            - "5555:5555"
-        command: flower
+  flower:
+    image: nicor88/docker-airflow:1.9.0
+    restart: always
+    depends_on:
+      - redis
+    environment:
+      - EXECUTOR=Celery
+      - REDIS_PASSWORD=redispass
+    ports:
+      - "5555:5555"
+    command: flower
 
-    scheduler:
-        image: nicor88/docker-airflow:1.9.0
-        restart: always
-        depends_on:
-            - webserver
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-        environment:
-            - LOAD_EX=n
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-            - EXECUTOR=Celery
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-            - REDIS_PASSWORD=redispass
-        command: scheduler
+  scheduler:
+    image: nicor88/docker-airflow:1.9.0
+    restart: always
+    depends_on:
+      - webserver
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+    environment:
+      - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - EXECUTOR=Celery
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+      - REDIS_PASSWORD=redispass
+    command: scheduler
 
-    worker:
-        image: nicor88/docker-airflow:1.9.0
-        restart: always
-        depends_on:
-            - scheduler
-        volumes:
-            - ./dags:/usr/local/airflow/dags
-        environment:
-            - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-            - EXECUTOR=Celery
-            - POSTGRES_USER=airflow
-            - POSTGRES_PASSWORD=airflow
-            - POSTGRES_DB=airflow
-            - REDIS_PASSWORD=redispass
-        command: worker
+  worker:
+    image: nicor88/docker-airflow:1.9.0
+    restart: always
+    depends_on:
+      - scheduler
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+    environment:
+      - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - EXECUTOR=Celery
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+      - REDIS_PASSWORD=redispass
+    command: worker

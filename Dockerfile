@@ -37,10 +37,13 @@ RUN set -ex \
         git \
     ' \
     && apt-get update -yqq \
+    && apt-get upgrade -yqq \
     && apt-get install -yqq --no-install-recommends \
         $buildDeps \
         python3-pip \
         python3-requests \
+        mysql-client \
+        libmysqlclient-dev \
         apt-utils \
         curl \
         rsync \
@@ -50,15 +53,17 @@ RUN set -ex \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
     && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
-    && python -m pip install -U pip setuptools wheel \
+    && pip install -U pip setuptools wheel \
     && pip install Cython \
     && pip install pytz \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,s3]==$AIRFLOW_VERSION \
-    && pip install celery[redis]==4.0.2 \
+    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql]==$AIRFLOW_VERSION \
+    && pip install celery[redis]==4.1.1 \
+    && pip install psycopg2-binary \
     && apt-get purge --auto-remove -yqq $buildDeps \
+    && apt-get autoremove -yqq --purge \
     && apt-get clean \
     && rm -rf \
         /var/lib/apt/lists/* \
@@ -74,6 +79,7 @@ COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 ADD dags ${AIRFLOW_HOME}/dags
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
+
 
 EXPOSE 8080 5555 8793
 

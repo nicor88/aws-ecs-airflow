@@ -7,7 +7,7 @@ Airflow setup for ETL
 
 #### Build
 <pre>
-docker build --rm -t nicor88/docker-airflow .
+docker build --rm -t nicor88/docker-airflow:1.9.0 .
 </pre>
 
 #### Run

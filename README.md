@@ -1,22 +1,21 @@
 # airflow-etl
 Airflow setup for ETL
 
-## Init and Start
+## Docker
 
-### Docker
-
-#### Build
+### Build Docker Image Locally
 <pre>
-docker build --rm -t nicor88/docker-airflow:1.9.0 .
+make build_locally
 </pre>
 
-#### Run
-<pre># start docker daemon
-# run docker compose
-docker-compose up -d
+### Star Airflow Locally
+<pre>
+make start
+</pre>
 
-# stop docleker compose
-docker-compose down
+### Stop Airflow Locally
+<pre>
+make clean
 </pre>
 
 ### AWS ECR

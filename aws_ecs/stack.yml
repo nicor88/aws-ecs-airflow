@@ -8,13 +8,14 @@ Parameters:
     Description: "The selected key pair that will be added to the set of keys authorized for this instance"
     Type: AWS::EC2::KeyPair::KeyName
     Default: "nicor"
+
   VPC:
     Type: String
     Default: "vpc-8b708fec"
-  PublicSubnet:
-    Type: String
-    Default: "subnet-79613c22"
 
+  PublicRouteTable:
+    Type: String
+    Default: "rtb-1197ed76"
 
 Mappings:
   AWSRegionToAMI:
@@ -38,6 +39,23 @@ Mappings:
       AMIID: ami-5781be34
 
 Resources:
+  AirflowSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "eu-west-1a"
+      CidrBlock: "172.31.10.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: airflow-ecs
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref AirflowSubnet
+
   AirflowDockerRepository:
     Type: AWS::ECR::Repository
     Properties:
@@ -71,7 +89,8 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
-      SubnetId: !Ref PublicSubnet
+      SubnetId: !Ref AirflowSubnet
+      Monitoring: 'true'
       SecurityGroupIds:
         - !Ref AirflowSecurityGroup
       InstanceType: 'm5.xlarge'
@@ -82,7 +101,7 @@ Resources:
           #!/bin/bash -xe
           echo ECS_CLUSTER=${AirflowECSCluster} >> /etc/ecs/ecs.config
           yum install -y aws-cfn-bootstrap
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AirflowEC2Instance --region ${AWS::Region}
 
   AirflowEC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile

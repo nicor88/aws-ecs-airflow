@@ -1,0 +1,12 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: tutorial
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: nginx

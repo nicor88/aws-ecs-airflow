@@ -1,0 +1,134 @@
+# CFN stack `ltv-extra`
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Infrastructure to run Airflow
+
+Parameters:
+  KeyName:
+    Description: "The selected key pair that will be added to the set of keys authorized for this instance"
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: "nicor"
+  VPC:
+    Type: String
+    Default: "vpc-8b708fec"
+  PublicSubnet:
+    Type: String
+    Default: "subnet-79613c22"
+
+
+Mappings:
+  AWSRegionToAMI:
+    us-east-1:
+      AMIID: ami-eca289fb
+    us-east-2:
+      AMIID: ami-446f3521
+    us-west-1:
+      AMIID: ami-9fadf8ff
+    us-west-2:
+      AMIID: ami-7abc111a
+    eu-west-1:
+      AMIID: ami-a1491ad2
+    eu-central-1:
+      AMIID: ami-54f5303b
+    ap-northeast-1:
+      AMIID: ami-9cd57ffd
+    ap-southeast-1:
+      AMIID: ami-a900a3ca
+    ap-southeast-2:
+      AMIID: ami-5781be34
+
+Resources:
+  AirflowDockerRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: airflow
+
+  AirflowECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: airflow
+
+  AirflowSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: EcsSecurityGroup
+      GroupDescription: EcsSecurityGroup
+      SecurityGroupIngress:
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '22'
+          IpProtocol: tcp
+          ToPort: '22'
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '8080'
+          IpProtocol: tcp
+          ToPort: '8080'
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: airflow-ecs-sg
+
+  AirflowEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref AirflowSecurityGroup
+      InstanceType: 'm5.xlarge'
+      IamInstanceProfile: !Ref AirflowEC2InstanceProfile
+      KeyName: !Ref 'KeyName'
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${AirflowECSCluster} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+
+  AirflowEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref AirflowECSRole
+
+  AirflowECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+            - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+              - ec2.amazonaws.com
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action:
+                  - ecs:*
+                Effect: Allow
+                Resource: "*"
+                Sid: ecs
+              - Action:
+                  - s3:*
+                Effect: Allow
+                Resource: "*"
+              - Action:
+                  - logs:*
+                Effect: Allow
+                Resource: "*"
+                Sid: S3LtvBucket
+          PolicyName: AirflowRolePolicy
+
+  AirflowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/ecs/airflow'
+      RetentionInDays: 30
+
+Outputs:
+  AirflowECSClusterARN:
+    Description: The ARN of the ECS cluster where to run Airflow
+    Value: !GetAtt AirflowECSCluster.Arn
+    Export:
+      Name: AirflowECSClusterARN

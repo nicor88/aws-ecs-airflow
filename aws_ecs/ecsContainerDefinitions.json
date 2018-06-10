@@ -1,4 +1,7 @@
 {
+  "requiresCompatibilities": [
+    "EC2"
+  ],
   "containerDefinitions": [
     {
       "name": "redis",
@@ -49,16 +52,12 @@
     },
     {
       "name": "webserver",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.3",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:latest",
       "links": [
         "postgres",
         "redis"
       ],
       "environment": [
-        {
-          "name": "LOAD_EX",
-          "value": "n"
-        },
         {
           "name": "FERNET_KEY",
           "value": "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
@@ -106,7 +105,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "airflow-webserver",
+          "awslogs-group": "/aws/ecs/airflow",
           "awslogs-region": "eu-west-1",
           "awslogs-stream-prefix": "webserver"
         }
@@ -114,17 +113,13 @@
     },
     {
       "name": "scheduler",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.3",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:latest",
       "essential": true,
       "links": [
         "postgres",
         "redis"
       ],
       "environment": [
-        {
-          "name": "LOAD_EX",
-          "value": "n"
-        },
         {
           "name": "FERNET_KEY",
           "value": "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
@@ -166,7 +161,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "airflow-scheduler",
+          "awslogs-group": "/aws/ecs/airflow",
           "awslogs-region": "eu-west-1",
           "awslogs-stream-prefix": "scheduler"
         }
@@ -174,7 +169,7 @@
     },
     {
       "name": "worker",
-      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:0.0.3",
+      "image": "749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow:latest",
       "essential": true,
       "links": [
         "postgres",
@@ -222,7 +217,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "airflow-worker",
+          "awslogs-group": "/aws/ecs/airflow",
           "awslogs-region": "eu-west-1",
           "awslogs-stream-prefix": "worker"
         }
@@ -233,6 +228,5 @@
   "volumes": [],
   "placementConstraints": [],
   "networkMode": "bridge",
-  "memory": null,
-  "cpu": null
+  "taskRoleArn": "arn:aws:iam::749785218022:role/ecs-task-role"
 }

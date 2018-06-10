@@ -1,4 +1,4 @@
-# CFN stack `ltv-extra`
+# CFN stack `airflow-ecs`
 
 AWSTemplateFormatVersion: 2010-09-09
 Description: Infrastructure to run Airflow
@@ -11,55 +11,49 @@ Parameters:
 
   VPC:
     Type: String
-    Default: "vpc-8b708fec"
+    Default: "vpc-4361833a"
 
   PublicRouteTable:
     Type: String
-    Default: "rtb-1197ed76"
+    Default: "rtb-cb8c7bb3"
+
+  EcsEndpoint:
+    Type: String
+    Default: ""
 
 Mappings:
   AWSRegionToAMI:
     us-east-1:
-      AMIID: ami-eca289fb
+      AMIID: ami-5253c32d
     us-east-2:
-      AMIID: ami-446f3521
-    us-west-1:
-      AMIID: ami-9fadf8ff
-    us-west-2:
-      AMIID: ami-7abc111a
+      AMIID: ami-956e52f0
     eu-west-1:
-      AMIID: ami-a1491ad2
-    eu-central-1:
-      AMIID: ami-54f5303b
-    ap-northeast-1:
-      AMIID: ami-9cd57ffd
-    ap-southeast-1:
-      AMIID: ami-a900a3ca
-    ap-southeast-2:
-      AMIID: ami-5781be34
+      AMIID: ami-c91624b0
+    eu-west-2:
+      AMIID: ami-3622cf51
 
 Resources:
-  AirflowSubnet:
+#  AirflowDockerRepository:
+#    Type: AWS::ECR::Repository
+#    Properties:
+#      RepositoryName: airflow
+
+  AirflowSubnet1a:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: "eu-west-1a"
-      CidrBlock: "172.31.10.0/24"
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "172.31.96.0/20"
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: airflow-ecs
+          Value: airflow-1a-ecs
 
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
-      SubnetId: !Ref AirflowSubnet
-
-  AirflowDockerRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: airflow
+      SubnetId: !Ref AirflowSubnet1a
 
   AirflowECSCluster:
     Type: AWS::ECS::Cluster
@@ -80,28 +74,49 @@ Resources:
           FromPort: '8080'
           IpProtocol: tcp
           ToPort: '8080'
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '5432'
+          IpProtocol: tcp
+          ToPort: '5432'
       VpcId: !Ref VPC
       Tags:
         - Key: Name
           Value: airflow-ecs-sg
 
-  AirflowEC2Instance:
-    Type: AWS::EC2::Instance
+  EcsInstanceLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
-      SubnetId: !Ref AirflowSubnet
-      Monitoring: 'true'
-      SecurityGroupIds:
-        - !Ref AirflowSecurityGroup
       InstanceType: 'm5.xlarge'
+      AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref AirflowEC2InstanceProfile
-      KeyName: !Ref 'KeyName'
+      KeyName: !Ref KeyName
+      SecurityGroups: [ !Ref AirflowSecurityGroup ]
+      BlockDeviceMappings:
+      - DeviceName: '/dev/xvdcz'
+        Ebs:
+         VolumeSize: '25'
+         VolumeType: 'gp2'
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
           echo ECS_CLUSTER=${AirflowECSCluster} >> /etc/ecs/ecs.config
-          yum install -y aws-cfn-bootstrap
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AirflowEC2Instance --region ${AWS::Region}
+          echo ECS_BACKEND_HOST=${EcsEndpoint} >> /etc/ecs/ecs.config
+
+  EcsInstanceAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref AirflowSubnet1a
+      LaunchConfigurationName: !Ref EcsInstanceLaunchConfiguration
+      MinSize: 0
+      MaxSize: 2
+      DesiredCapacity: 1
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "ecs-instance-${AirflowECSCluster}"
+          PropagateAtLaunch: 'true'
 
   AirflowEC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -129,6 +144,11 @@ Resources:
                 Resource: "*"
                 Sid: ecs
               - Action:
+                  - ecr:*
+                Effect: Allow
+                Resource: "*"
+                Sid: ecr
+              - Action:
                   - s3:*
                 Effect: Allow
                 Resource: "*"
@@ -144,6 +164,48 @@ Resources:
     Properties:
       LogGroupName: '/aws/ecs/airflow'
       RetentionInDays: 30
+
+  AirflowTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: airflow-dev
+      RequiresCompatibilities:
+        - "EC2"
+      ContainerDefinitions:
+        - Name: "postgres"
+          Image: "postgres:9.6"
+          Memory: 2000
+          Cpu: 1000
+          Essential: "true"
+          Environment:
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+          PortMappings:
+            - ContainerPort: 5432
+              HostPort: 5432
+
+        - Name: "redis"
+          Image: "redis:3.2.7"
+          Memory: 1000
+          Cpu: 500
+          Essential: "true"
+          Command:
+            - "redis-server"
+            - "--requirepass"
+            - "redisairflow"
+
+#  AirflowService:
+#    Type: "AWS::ECS::Service"
+#    Properties:
+#      Cluster: !Ref AirflowECSCluster
+#      DesiredCount: 1
+#      TaskDefinition: !Ref AirflowTaskDefinition
 
 Outputs:
   AirflowECSClusterARN:

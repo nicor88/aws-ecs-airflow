@@ -1,19 +1,22 @@
 .EXPORT_ALL_VARIABLES:
 
 STACK_NAME = airflow-ecs
-AWS_DEFAULT_PROFILE = nicor88
-IMAGE_NAME = nicor88/docker-airflow
+IMAGE_NAME = airflow
+AWS_ACCOUNT = 749785218022
+AWS_REGION = us-east-1
+AUTH = $(shell aws --profile nicor88 ecr get-login --no-include-email)
 
 default: build_locally
 
 build_locally:
 	docker build --rm -t $$IMAGE_NAME:latest .
-	@echo "Airflow image build"
 
-push_remote: build_locally
-	eval $(aws --profile $$AWS_DEFAULT_PROFILE ecr get-login --no-include-email)
-	docker tag $$IMAGE_NAME 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow
-	docker push 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow
+auth:
+	$$AUTH
+
+push_remote: build_locally auth
+	docker tag $$IMAGE_NAME $$AWS_ACCOUNT.dkr.ecr.$$AWS_REGION.amazonaws.com/airflow
+	docker push $$AWS_ACCOUNT.dkr.ecr.$$AWS_REGION.amazonaws.com/airflow
 	@echo "Pushed to ECR"
 
 start: build_locally

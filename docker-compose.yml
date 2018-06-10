@@ -1,4 +1,4 @@
-version: '2.1'
+version: '3'
 services:
   redis:
     image: 'redis:3.2.7'
@@ -16,7 +16,7 @@ services:
       - 5432:5432
 
   webserver:
-    image: nicor88/docker-airflow:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - postgres
@@ -28,7 +28,6 @@ services:
       - POSTGRES_PASSWORD=airflow
       - POSTGRES_DB=airflow
       - REDIS_PASSWORD=redispass
-
     volumes:
         - ./dags:/usr/local/airflow/dags
     ports:
@@ -41,7 +40,7 @@ services:
       retries: 3
 
   flower:
-    image: nicor88/docker-airflow:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - redis
@@ -53,7 +52,7 @@ services:
     command: flower
 
   scheduler:
-    image: nicor88/docker-airflow:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - webserver
@@ -69,7 +68,7 @@ services:
     command: scheduler
 
   worker:
-    image: nicor88/docker-airflow:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - scheduler

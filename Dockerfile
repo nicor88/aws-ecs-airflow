@@ -75,11 +75,12 @@ RUN set -ex \
 
 COPY config/entrypoint.sh /entrypoint.sh
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+# COPY config/log_config.py ${AIRFLOW_HOME}/log_config.py
+# ENV PYTHONPATH ${AIRFLOW_HOME}:$PYTHONPATH
 
 ADD dags ${AIRFLOW_HOME}/dags
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
-
 
 EXPOSE 8080 5555 8793
 

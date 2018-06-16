@@ -99,3 +99,13 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Airflow
+airflow.db
+airflow-webserver.pid
+logs
+
+postgres_data/
+
+# PyCharm
+.idea

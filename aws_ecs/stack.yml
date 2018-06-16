@@ -1,0 +1,365 @@
+# CFN stack `airflow-ecs`
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Infrastructure to run Airflow
+
+Parameters:
+  KeyName:
+    Description: "The selected key pair that will be added to the set of keys authorized for this instance"
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: "nicor"
+
+  VPC:
+    Type: String
+    Default: "vpc-4361833a"
+
+  PublicRouteTable:
+    Type: String
+    Default: "rtb-cb8c7bb3"
+
+  EcsEndpoint:
+    Type: String
+    Default: ""
+
+Mappings:
+  AWSRegionToAMI:
+    us-east-1:
+      AMIID: ami-5253c32d
+    us-east-2:
+      AMIID: ami-956e52f0
+    eu-west-1:
+      AMIID: ami-c91624b0
+    eu-west-2:
+      AMIID: ami-3622cf51
+
+Resources:
+#  it's better to create repository in another stack
+#  AirflowDockerRepository:
+#    Type: AWS::ECR::Repository
+#    Properties:
+#      RepositoryName: airflow
+
+# TODO add Postgres RDS
+
+
+  AirflowSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "172.31.96.0/20"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: airflow-1a-ecs
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref AirflowSubnet1a
+
+  AirflowECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: airflow
+
+  AirflowSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: EcsSecurityGroup
+      GroupDescription: EcsSecurityGroup
+      SecurityGroupIngress:
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '22'
+          IpProtocol: tcp
+          ToPort: '22'
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '8080'
+          IpProtocol: tcp
+          ToPort: '8080'
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '8080'
+          IpProtocol: tcp
+          ToPort: '8080'
+        # TODO to remove after using RDS for Postgres
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '5555'
+          IpProtocol: tcp
+          ToPort: '5555'
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: airflow-ecs-sg
+
+  EcsInstanceLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMIID]
+      InstanceType: 'm5.xlarge'
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref AirflowEC2InstanceProfile
+      KeyName: !Ref KeyName
+      SecurityGroups: [ !Ref AirflowSecurityGroup ]
+      BlockDeviceMappings:
+      - DeviceName: '/dev/xvdcz'
+        Ebs:
+         VolumeSize: '25'
+         VolumeType: 'gp2'
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${AirflowECSCluster} >> /etc/ecs/ecs.config
+          echo ECS_BACKEND_HOST=${EcsEndpoint} >> /etc/ecs/ecs.config
+
+  EcsInstanceAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref AirflowSubnet1a
+      LaunchConfigurationName: !Ref EcsInstanceLaunchConfiguration
+      MinSize: 0
+      MaxSize: 2
+      DesiredCapacity: 1
+      Tags:
+        -
+          Key: Name
+          Value: !Sub "ecs-instance-${AirflowECSCluster}"
+          PropagateAtLaunch: 'true'
+
+  AirflowEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref AirflowECSRole
+
+  AirflowECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action:
+            - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+              - ec2.amazonaws.com
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action:
+                  - ecs:*
+                Effect: Allow
+                Resource: "*"
+                Sid: ecs
+              - Action:
+                  - ecr:*
+                Effect: Allow
+                Resource: "*"
+                Sid: ecr
+              - Action:
+                  - s3:*
+                Effect: Allow
+                Resource: "*"
+              - Action:
+                  - logs:*
+                Effect: Allow
+                Resource: "*"
+                Sid: S3LtvBucket
+          PolicyName: AirflowRolePolicy
+
+  AirflowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/aws/ecs/airflow'
+      RetentionInDays: 30
+
+  AirflowTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: airflow-dev
+      RequiresCompatibilities:
+        - "EC2"
+      ContainerDefinitions:
+        - Name: "postgres"
+          Image: "postgres:9.6"
+          Memory: 2000
+          Cpu: 1000
+          Essential: "true"
+          Environment:
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+          PortMappings:
+            - ContainerPort: 5432
+              HostPort: 5432
+
+        - Name: "redis"
+          Image: "redis:3.2.7"
+          Memory: 1000
+          Cpu: 500
+          Essential: "true"
+          Command:
+            - "redis-server"
+            - "--requirepass"
+            - "redisairflow"
+
+        - Name: "webserver"
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Memory: 1000
+          Cpu: 500
+          Essential: "true"
+          Command:
+            - "webserver"
+          Links:
+            - postgres
+            - redis
+          Environment:
+            - Name: "FERNET_KEY"
+              Value: "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
+            - Name: "EXECUTOR"
+              Value: "Celery"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "REDIS_PORT"
+              Value: "6379"
+            - Name: "REDIS_PASSWORD"
+              Value: "redisairflow"
+          PortMappings:
+            - ContainerPort: 8080
+              HostPort: 8080
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'webserver'
+
+        - Name: "scheduler"
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Memory: 1000
+          Cpu: 500
+          Essential: "true"
+          Command:
+            - "scheduler"
+          Links:
+            - postgres
+            - redis
+          Environment:
+            - Name: "FERNET_KEY"
+              Value: "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
+            - Name: "EXECUTOR"
+              Value: "Celery"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "REDIS_PORT"
+              Value: "6379"
+            - Name: "REDIS_PASSWORD"
+              Value: "redisairflow"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'scheduler'
+
+        - Name: "worker"
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Memory: 1500
+          Cpu: 1000
+          Essential: "true"
+          Command:
+            - "worker"
+          Links:
+            - postgres
+            - redis
+          Environment:
+            - Name: "FERNET_KEY"
+              Value: "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
+            - Name: "EXECUTOR"
+              Value: "Celery"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "REDIS_PORT"
+              Value: "6379"
+            - Name: "REDIS_PASSWORD"
+              Value: "redisairflow"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'worker'
+
+        - Name: "flower"
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Memory: 1000
+          Cpu: 500
+          Command:
+            - "flower"
+          Links:
+            - postgres
+            - redis
+          Environment:
+            - Name: "EXECUTOR"
+              Value: "Celery"
+            - Name: "POSTGRES_HOST"
+              Value: "postgres"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "REDIS_PORT"
+              Value: "6379"
+            - Name: "REDIS_PASSWORD"
+              Value: "redisairflow"
+          PortMappings:
+            - ContainerPort: 5555
+              HostPort: 5555
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'flower'
+
+  AirflowService:
+    Type: "AWS::ECS::Service"
+    Properties:
+      Cluster: !Ref AirflowECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref AirflowTaskDefinition
+
+Outputs:
+  AirflowECSClusterARN:
+    Description: The ARN of the ECS cluster where to run Airflow
+    Value: !GetAtt AirflowECSCluster.Arn
+    Export:
+      Name: AirflowECSClusterARN

@@ -23,10 +23,12 @@ start: build_locally
 	docker-compose up -d
 	@echo "Airflow up"
 
-clean:
+stop:
 	docker-compose down
 	@echo "Airflow down"
 
-clean_db:
+clean:
 	rm -rf postgres_data
 	@echo "Postgres data cleaned"
+	docker rmi airflow
+	@echo "Docker Airflow images removed"

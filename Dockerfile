@@ -79,6 +79,7 @@ COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 # ENV PYTHONPATH ${AIRFLOW_HOME}:$PYTHONPATH
 
 ADD dags ${AIRFLOW_HOME}/dags
+ADD plugins ${AIRFLOW_HOME}/plugins
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 

@@ -1,29 +1,29 @@
 # airflow-etl
-Airflow setup for ETL
+Airflow setup to run ETL jobs
 
-## Docker
+## Getting start
 
-### Build Docker Image Locally
-<pre>
-make build_locally
-</pre>
+### Requirements
+* Docker
 
-### Star Airflow Locally
+### Start Airflow Locally
+When starting Airflow locally the Docker image **airflow:latest** is build first. This will require a while before having Airflow running.
 <pre>
 make start
 </pre>
+If everything runs correctly you can reach Airflow navigating to [localhost:8080](http://localhost:8080).
+The current setup is based on CeleryWorkers. You can monitor how many workers are currently active going to [localhost:5555](http://localhost:5555)
 
 ### Stop Airflow Locally
 <pre>
-make clean
+make stop
 </pre>
 
-### AWS ECR
+### Clean-up
+
+It will delete all the local Postgress Data and clean up the airflow Images from Docker.
 <pre>
-eval $(aws --profile nicor88 ecr get-login --no-include-email)
-docker build --rm=True -t airflow .
-docker tag airflow 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow
-docker push 749785218022.dkr.ecr.eu-west-1.amazonaws.com/airflow
+make clean
 </pre>
 
 ## Resources

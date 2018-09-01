@@ -180,12 +180,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: '/aws/ecs/airflow'
-      RetentionInDays: 30
+      RetentionInDays: 15
 
   AirflowTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: airflow-dev
+      Family: airflow-ecs
       RequiresCompatibilities:
         - "EC2"
       ContainerDefinitions:
@@ -267,7 +267,7 @@ Resources:
               awslogs-stream-prefix: 'webserver'
 
         - Name: "scheduler"
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow-ecs:latest'
           Memory: 1000
           Cpu: 500
           Essential: "true"
@@ -303,7 +303,7 @@ Resources:
               awslogs-stream-prefix: 'scheduler'
 
         - Name: "worker"
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow-ecs:latest'
           Memory: 1000
           Cpu: 500
           Essential: "true"
@@ -339,7 +339,7 @@ Resources:
               awslogs-stream-prefix: 'worker'
 
         - Name: "flower"
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow-ecs:latest'
           Memory: 500
           Cpu: 100
           Command:
@@ -368,7 +368,7 @@ Resources:
               Value: "dev"
           PortMappings:
             - ContainerPort: 5555
-              HostPort: 5555
+              HostPort: 0 # set to 0 for dynamic port mapping, it will avoid a conflict with ports when updating the associated service
           LogConfiguration:
             LogDriver: "awslogs"
             Options:

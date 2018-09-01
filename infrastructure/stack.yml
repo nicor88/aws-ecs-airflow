@@ -1,68 +1,77 @@
 # CFN stack `airflow-ecs`
 
 AWSTemplateFormatVersion: 2010-09-09
-Description: Infrastructure to run Airflow
-
-Parameters:
-  KeyName:
-    Description: "The selected key pair that will be added to the set of keys authorized for this instance"
-    Type: AWS::EC2::KeyPair::KeyName
-    Default: "nicor"
-
-  VPC:
-    Type: String
-    Default: "vpc-4361833a"
-
-  PublicRouteTable:
-    Type: String
-    Default: "rtb-cb8c7bb3"
-
-  EcsEndpoint:
-    Type: String
-    Default: ""
+Description: Infrastructure to run Airflow in ECS
 
 Mappings:
   AWSRegionToAMI:
     us-east-1:
-      AMIID: ami-5253c32d
+      AMIID: ami-00129b193dc81bc31
     us-east-2:
-      AMIID: ami-956e52f0
+      AMIID: ami-028a9de0a7e353ed9
     eu-west-1:
-      AMIID: ami-c91624b0
-    eu-west-2:
-      AMIID: ami-3622cf51
+      AMIID: ami-0af844a965e5738db
 
 Resources:
-#  it's better to create repository in another stack
-#  AirflowDockerRepository:
-#    Type: AWS::ECR::Repository
-#    Properties:
-#      RepositoryName: airflow
 
-# TODO add Postgres RDS
+  AirflowVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: airflow-ecs-vpc
 
+  AirflowInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: airflow-ecs-igtw
+
+  AirflowAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: AirflowVPC
+      InternetGatewayId:
+        Ref: AirflowInternetGateway
+
+  AirflowPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: AirflowVPC
+      Tags:
+      - Key: Name
+        Value: airflow-plublic-rt
 
   AirflowSubnet1a:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref VPC
+      VpcId: !Ref AirflowVPC
       AvailabilityZone: "us-east-1a"
-      CidrBlock: "172.31.96.0/20"
+      CidrBlock: "10.0.0.0/24"
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
           Value: airflow-1a-ecs
 
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref AirflowInternetGateway
+      RouteTableId: !Ref AirflowPublicRouteTable
+
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref AirflowPublicRouteTable
       SubnetId: !Ref AirflowSubnet1a
-
-  AirflowECSCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: airflow
 
   AirflowSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -79,18 +88,18 @@ Resources:
           IpProtocol: tcp
           ToPort: '8080'
         - CidrIp: '0.0.0.0/0'
-          FromPort: '8080'
-          IpProtocol: tcp
-          ToPort: '8080'
-        # TODO to remove after using RDS for Postgres
-        - CidrIp: '0.0.0.0/0'
           FromPort: '5555'
           IpProtocol: tcp
           ToPort: '5555'
-      VpcId: !Ref VPC
+      VpcId: !Ref AirflowVPC
       Tags:
         - Key: Name
           Value: airflow-ecs-sg
+
+  AirflowECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: airflow
 
   EcsInstanceLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -99,7 +108,6 @@ Resources:
       InstanceType: 'm5.xlarge'
       AssociatePublicIpAddress: true
       IamInstanceProfile: !Ref AirflowEC2InstanceProfile
-      KeyName: !Ref KeyName
       SecurityGroups: [ !Ref AirflowSecurityGroup ]
       BlockDeviceMappings:
       - DeviceName: '/dev/xvdcz'
@@ -110,7 +118,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash -xe
           echo ECS_CLUSTER=${AirflowECSCluster} >> /etc/ecs/ecs.config
-          echo ECS_BACKEND_HOST=${EcsEndpoint} >> /etc/ecs/ecs.config
+          echo ECS_BACKEND_HOST="" >> /etc/ecs/ecs.config
 
   EcsInstanceAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -165,7 +173,7 @@ Resources:
                   - logs:*
                 Effect: Allow
                 Resource: "*"
-                Sid: S3LtvBucket
+                Sid: s3
           PolicyName: AirflowRolePolicy
 
   AirflowLogGroup:
@@ -182,7 +190,7 @@ Resources:
         - "EC2"
       ContainerDefinitions:
         - Name: "postgres"
-          Image: "postgres:9.6"
+          Image: "postgres:10.4"
           Memory: 2000
           Cpu: 1000
           Essential: "true"
@@ -198,19 +206,29 @@ Resources:
           PortMappings:
             - ContainerPort: 5432
               HostPort: 5432
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'postgres'
 
         - Name: "redis"
-          Image: "redis:3.2.7"
-          Memory: 1000
+          Image: "redis:4.0.10"
+          Memory: 500
           Cpu: 500
           Essential: "true"
           Command:
             - "redis-server"
-            - "--requirepass"
-            - "redisairflow"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'redis'
 
         - Name: "webserver"
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow-ecs:latest'
           Memory: 1000
           Cpu: 500
           Essential: "true"
@@ -220,10 +238,12 @@ Resources:
             - postgres
             - redis
           Environment:
-            - Name: "FERNET_KEY"
-              Value: "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
-            - Name: "EXECUTOR"
-              Value: "Celery"
+            - Name: "REDIS_HOST"
+              Value: "redis"
+            - Name: "REDIS_PORT"
+              Value: "6379"
+            - Name: "POSTGRES_HOST"
+              Value: "postgres"
             - Name: "POSTGRES_PORT"
               Value: "5432"
             - Name: "POSTGRES_USER"
@@ -232,13 +252,13 @@ Resources:
               Value: "airflow"
             - Name: "POSTGRES_DB"
               Value: "airflow"
-            - Name: "REDIS_PORT"
-              Value: "6379"
-            - Name: "REDIS_PASSWORD"
-              Value: "redisairflow"
+            - Name: "FERNET_KEY"
+              Value: "5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw="
+            - Name: "STAGE"
+              Value: "dev"
           PortMappings:
             - ContainerPort: 8080
-              HostPort: 8080
+              HostPort: 0 # set to 0 for dynamic port mapping, it will avoid a conflict with ports when updating the associated service
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -257,75 +277,10 @@ Resources:
             - postgres
             - redis
           Environment:
-            - Name: "FERNET_KEY"
-              Value: "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
-            - Name: "EXECUTOR"
-              Value: "Celery"
-            - Name: "POSTGRES_PORT"
-              Value: "5432"
-            - Name: "POSTGRES_USER"
-              Value: "airflow"
-            - Name: "POSTGRES_PASSWORD"
-              Value: "airflow"
-            - Name: "POSTGRES_DB"
-              Value: "airflow"
+            - Name: "REDIS_HOST"
+              Value: "redis"
             - Name: "REDIS_PORT"
               Value: "6379"
-            - Name: "REDIS_PASSWORD"
-              Value: "redisairflow"
-          LogConfiguration:
-            LogDriver: "awslogs"
-            Options:
-              awslogs-group: !Ref AirflowLogGroup
-              awslogs-region: 'us-east-1'
-              awslogs-stream-prefix: 'scheduler'
-
-        - Name: "worker"
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
-          Memory: 1500
-          Cpu: 1000
-          Essential: "true"
-          Command:
-            - "worker"
-          Links:
-            - postgres
-            - redis
-          Environment:
-            - Name: "FERNET_KEY"
-              Value: "46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho="
-            - Name: "EXECUTOR"
-              Value: "Celery"
-            - Name: "POSTGRES_PORT"
-              Value: "5432"
-            - Name: "POSTGRES_USER"
-              Value: "airflow"
-            - Name: "POSTGRES_PASSWORD"
-              Value: "airflow"
-            - Name: "POSTGRES_DB"
-              Value: "airflow"
-            - Name: "REDIS_PORT"
-              Value: "6379"
-            - Name: "REDIS_PASSWORD"
-              Value: "redisairflow"
-          LogConfiguration:
-            LogDriver: "awslogs"
-            Options:
-              awslogs-group: !Ref AirflowLogGroup
-              awslogs-region: 'us-east-1'
-              awslogs-stream-prefix: 'worker'
-
-        - Name: "flower"
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
-          Memory: 1000
-          Cpu: 500
-          Command:
-            - "flower"
-          Links:
-            - postgres
-            - redis
-          Environment:
-            - Name: "EXECUTOR"
-              Value: "Celery"
             - Name: "POSTGRES_HOST"
               Value: "postgres"
             - Name: "POSTGRES_PORT"
@@ -336,10 +291,81 @@ Resources:
               Value: "airflow"
             - Name: "POSTGRES_DB"
               Value: "airflow"
+            - Name: "FERNET_KEY"
+              Value: "5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw="
+            - Name: "STAGE"
+              Value: "dev"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'scheduler'
+
+        - Name: "worker"
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Memory: 1000
+          Cpu: 500
+          Essential: "true"
+          Command:
+            - "worker"
+          Links:
+            - postgres
+            - redis
+          Environment:
+            - Name: "REDIS_HOST"
+              Value: "redis"
             - Name: "REDIS_PORT"
               Value: "6379"
-            - Name: "REDIS_PASSWORD"
-              Value: "redisairflow"
+            - Name: "POSTGRES_HOST"
+              Value: "postgres"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "FERNET_KEY"
+              Value: "5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw="
+            - Name: "STAGE"
+              Value: "dev"
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref AirflowLogGroup
+              awslogs-region: 'us-east-1'
+              awslogs-stream-prefix: 'worker'
+
+        - Name: "flower"
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/airflow:latest'
+          Memory: 500
+          Cpu: 100
+          Command:
+            - "flower"
+          Links:
+            - postgres
+            - redis
+          Environment:
+            - Name: "REDIS_HOST"
+              Value: "redis"
+            - Name: "REDIS_PORT"
+              Value: "6379"
+            - Name: "POSTGRES_HOST"
+              Value: "postgres"
+            - Name: "POSTGRES_PORT"
+              Value: "5432"
+            - Name: "POSTGRES_USER"
+              Value: "airflow"
+            - Name: "POSTGRES_PASSWORD"
+              Value: "airflow"
+            - Name: "POSTGRES_DB"
+              Value: "airflow"
+            - Name: "FERNET_KEY"
+              Value: "5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw="
+            - Name: "STAGE"
+              Value: "dev"
           PortMappings:
             - ContainerPort: 5555
               HostPort: 5555

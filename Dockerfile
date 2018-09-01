@@ -1,8 +1,5 @@
-# VERSION 1.9.0-1
-# AUTHOR: Matthieu "Puckel_" Roisil
-# DESCRIPTION: Basic Airflow container
-# BUILD: docker build --rm -t nicor88/docker-airflow .
-# SOURCE: https://github.com/puckel/docker-airflow
+# BUILD: docker build --rm -t airflow .
+# ORIGINAL SOURCE: https://github.com/puckel/docker-airflow
 
 FROM python:3.6-slim
 MAINTAINER nicor88
@@ -12,8 +9,10 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
 # Airflow
-ARG AIRFLOW_VERSION=1.9.0
+ARG AIRFLOW_VERSION=v1-10-stable
 ARG AIRFLOW_HOME=/usr/local/airflow
+ARG REDIS_VERSION=4.1.1
+ENV AIRFLOW_GPL_UNIDECODE=yes
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -40,10 +39,11 @@ RUN set -ex \
     && apt-get upgrade -yqq \
     && apt-get install -yqq --no-install-recommends \
         $buildDeps \
+        sudo \
         python3-pip \
         python3-requests \
         mysql-client \
-        libmysqlclient-dev \
+        default-libmysqlclient-dev \
         apt-utils \
         curl \
         rsync \
@@ -59,8 +59,9 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,password]==$AIRFLOW_VERSION \
-    && pip install celery[redis]==4.1.1 \
+    && pip install git+https://github.com/apache/incubator-airflow.git@$AIRFLOW_VERSION#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
+    && pip install celery[redis]==$REDIS_VERSION \
+    && pip install flask_oauthlib \
     && pip install psycopg2-binary \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -74,17 +75,22 @@ RUN set -ex \
         /usr/share/doc-base
 
 COPY config/entrypoint.sh /entrypoint.sh
-COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
-# COPY config/log_config.py ${AIRFLOW_HOME}/log_config.py
-# ENV PYTHONPATH ${AIRFLOW_HOME}:$PYTHONPATH
+RUN chmod +x /entrypoint.sh
 
-ADD dags ${AIRFLOW_HOME}/dags
-ADD plugins ${AIRFLOW_HOME}/plugins
+COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+
+COPY dags ${AIRFLOW_HOME}/dags
+COPY plugins ${AIRFLOW_HOME}/plugins
+
+ENV PYTHONPATH ${AIRFLOW_HOME}
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793
 
 USER airflow
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint.sh"]

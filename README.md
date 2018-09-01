@@ -1,42 +1,55 @@
-# airflow-etl
-Airflow setup to run ETL jobs
+# airflow-ecs
+Setup to run Airflow in AWS ECS containers
 
-## Getting start
-
-### Requirements
+## Requirements
 * Docker
+* [awscli](https://aws.amazon.com/cli/)
+* AWS IAM User
 
-### Start Airflow Locally
-When starting Airflow locally the Docker image **airflow:latest** is build first. This will require a while before having Airflow running.
-<pre>
-make start
-</pre>
+## Local Development
+It's possible to start Airflow locally simply running:
+```
+docker-compose up --build
+```
 If everything runs correctly you can reach Airflow navigating to [localhost:8080](http://localhost:8080).
-The current setup is based on CeleryWorkers. You can monitor how many workers are currently active going to [localhost:5555](http://localhost:5555)
+The current setup is based on CeleryWorkers. You can monitor how many workers are currently active using Flower, visiting [localhost:5555](http://localhost:5555)
 
-### Stop Airflow Locally
-<pre>
-make stop
-</pre>
+## Deploy Airflow in AWS ECS
+To run Airflow in AWS we will use ECS (Elastic Container Service).
+To deploy Airflow setup we need first to create the container repository for our Docker Images.
 
-### Clean-up
+We will user ECR (Elastic Container Repository).
+* Create a new repository using:
+	```
+	aws ecr create-repository --repository-name airflow-ecs --profile your_aws_profile
+	```
+* Login to ECR
+  ```
+  eval $(aws ecr get-login --no-include-email --profile your_aws_profile)
 
-It will delete all the local Postgress Data and clean up the airflow Images from Docker.
-<pre>
-make clean
-</pre>
+  ```
+* Build the image locally:
+  ```
+  docker build -t airflow-ecs .
 
-## Resources
+  ```
 
-### Articles
-* [Developing Workflows with Apache Airflow](http://michal.karzynski.pl/blog/2017/03/19/developing-workflows-with-apache-airflow/)
-* [Installing Apache Airflow on Ubuntu/AWS](https://medium.com/a-r-g-o/installing-apache-airflow-on-ubuntu-aws-6ebac15db211)
-* [A Guide On How To Build An Airflow Server/Cluster](https://stlong0521.github.io/20161023%20-%20Airflow.html)
-* [ETL Pipelines With Airflow](http://michael-harmon.com/blog/AirflowETL.html)
-* [Airflow Tutorial for Data Pipelines](https://blog.godatadriven.com/practical-airflow-tutorial)
-* [Building a Data Pipeline with Airflow](http://tech.marksblogg.com/airflow-postgres-redis-forex.html)
-* [PostgresOperator](https://programtalk.com/python-examples/airflow.operators.postgres_operator.PostgresOperator/)
+* Push Airflow Image to ECR:
+  ```
+  docker tag airflow-ecs:latest your_aws_account_number.dkr.ecr.your_aws_region.amazonaws.com/airflow-ecs:latest
+  docker push your_aws_account_number.dkr.ecr.your_aws_region.amazonaws.com/airflow-ecs:latest
 
-### Video
-* [A Pratctical Introduction to Airflow](https://www.youtube.com/watch?v=cHATHSB_450)
-* [Modern ETL-ing with Python and Airflow (and Spark)](https://www.youtube.com/watch?v=tcJhSaowzUI)
+  ```
+  **NOTE**: replace _your_aws_account_number_ and _your_aws_region_
+
+Now that Airflow Image is pushed to ECR we can create our Infrastructure using Cloudformation.
+```
+cd infrastructure
+AWS_DEFAULT_PROFILE=nicor88 make create
+```
+
+### Clean up
+```
+cd infrastructure
+AWS_DEFAULT_PROFILE=nicor88 make clean
+```

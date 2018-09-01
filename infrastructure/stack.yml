@@ -250,7 +250,7 @@ Resources:
               Value: "dev"
           PortMappings:
             - ContainerPort: 8080
-              HostPort: 0 # set to 0 for dynamic port mapping, it will avoid a conflict with ports when updating the associated service
+              HostPort: 8080
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -360,7 +360,7 @@ Resources:
               Value: "dev"
           PortMappings:
             - ContainerPort: 5555
-              HostPort: 0 # set to 0 for dynamic port mapping, it will avoid a conflict with ports when updating the associated service
+              HostPort: 5555
           LogConfiguration:
             LogDriver: "awslogs"
             Options:

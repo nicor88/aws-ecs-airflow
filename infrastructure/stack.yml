@@ -80,17 +80,9 @@ Resources:
       GroupDescription: EcsSecurityGroup
       SecurityGroupIngress:
         - CidrIp: '0.0.0.0/0'
-          FromPort: '22'
+          FromPort: 0
           IpProtocol: tcp
-          ToPort: '22'
-        - CidrIp: '0.0.0.0/0'
-          FromPort: '8080'
-          IpProtocol: tcp
-          ToPort: '8080'
-        - CidrIp: '0.0.0.0/0'
-          FromPort: '5555'
-          IpProtocol: tcp
-          ToPort: '5555'
+          ToPort: 65535
       VpcId: !Ref AirflowVPC
       Tags:
         - Key: Name

@@ -180,7 +180,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: '/aws/ecs/airflow'
-      RetentionInDays: 15
+      RetentionInDays: 30
 
   AirflowTaskDefinition:
     Type: AWS::ECS::TaskDefinition

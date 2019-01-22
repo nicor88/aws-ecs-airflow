@@ -9,7 +9,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
 # Airflow
-ARG AIRFLOW_VERSION=v1-10-stable
+ARG AIRFLOW_VERSION=1.10.0
+# it's possible to use v1-10-stable, but it's a development branch
 ARG AIRFLOW_HOME=/usr/local/airflow
 ARG REDIS_VERSION=4.1.1
 ENV AIRFLOW_GPL_UNIDECODE=yes

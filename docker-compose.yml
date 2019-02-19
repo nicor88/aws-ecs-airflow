@@ -16,7 +16,7 @@ services:
       - 5432:5432
 
   webserver:
-    image: airflow-ecs:latest
+    image: airflow:latest
     restart: always
     build: .
     depends_on:
@@ -30,8 +30,9 @@ services:
       - POSTGRES_USER=airflow
       - POSTGRES_PASSWORD=airflow
       - POSTGRES_DB=airflow
-      - FERNET_KEY=5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw=
+      - FERNET_KEY=${AIRFLOW_FERNET_KEY}
       - AIRFLOW_BASE_URL=http://localhost:8080
+      - ENABLE_REMOTE_LOGGING=False
       - STAGE=dev
     volumes:
         - ./dags:/usr/local/airflow/dags
@@ -45,7 +46,7 @@ services:
       retries: 3
 
   flower:
-    image: airflow-ecs:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - redis
@@ -64,7 +65,7 @@ services:
     command: flower
 
   scheduler:
-    image: airflow-ecs:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - webserver
@@ -78,13 +79,14 @@ services:
       - POSTGRES_USER=airflow
       - POSTGRES_PASSWORD=airflow
       - POSTGRES_DB=airflow
-      - FERNET_KEY=5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw=
+      - FERNET_KEY=${AIRFLOW_FERNET_KEY}
       - AIRFLOW_BASE_URL=http://localhost:8080
+      - ENABLE_REMOTE_LOGGING=False
       - STAGE=dev
     command: scheduler
 
   worker:
-    image: airflow-ecs:latest
+    image: airflow:latest
     restart: always
     depends_on:
       - webserver
@@ -99,7 +101,8 @@ services:
       - POSTGRES_USER=airflow
       - POSTGRES_PASSWORD=airflow
       - POSTGRES_DB=airflow
-      - FERNET_KEY=5wdl5ArK00jIAFZPvDNpV4_TmLAPCht1z-JDJFfdFsw=
+      - FERNET_KEY=${AIRFLOW_FERNET_KEY}
       - AIRFLOW_BASE_URL=http://localhost:8080
+      - ENABLE_REMOTE_LOGGING=False
       - STAGE=dev
     command: worker

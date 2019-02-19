@@ -4,6 +4,9 @@ import logging
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 
+import pandas
+import toolz
+
 logger = logging.getLogger(__name__)
 
 default_args = {
@@ -23,6 +26,8 @@ dag = DAG('my_first_dag',
 def task_1(**kwargs):
     output = {'output': 'hello world 1', 'execution_time': str(datetime.now())}
     logger.info(output)
+    logger.info(f'Pandas version: {pandas.__version__}')
+    logger.info(f'Toolz version: {toolz.__version__}')
     return output
 
 
@@ -44,4 +49,5 @@ t2 = PythonOperator(
     python_callable=task_2
 )
 
-t2.set_upstream(t1)
+t1 >> t2
+# t2.set_upstream(t1)

@@ -2,7 +2,8 @@
 # ORIGINAL SOURCE: https://github.com/puckel/docker-airflow
 
 FROM python:3.6-slim
-MAINTAINER nicor88
+LABEL version="1.0"
+LABEL maintainer="nicor88"
 
 # Never prompts the user for choices on installation/configuration of packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -10,6 +11,7 @@ ENV TERM linux
 
 # Airflow
 ARG AIRFLOW_VERSION=1.10.0
+
 # it's possible to use v1-10-stable, but it's a development branch
 ARG AIRFLOW_HOME=/usr/local/airflow
 ARG REDIS_VERSION=4.1.1
@@ -61,6 +63,7 @@ RUN set -ex \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
     && pip install git+https://github.com/apache/incubator-airflow.git@$AIRFLOW_VERSION#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
+    && pip install redis==2.10.6 \
     && pip install celery[redis]==$REDIS_VERSION \
     && pip install flask_oauthlib \
     && pip install psycopg2-binary \
@@ -77,6 +80,12 @@ RUN set -ex \
 
 COPY config/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+RUN chown -R airflow: ${AIRFLOW_HOME}
+
+USER airflow
+
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
 
 COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
@@ -85,13 +94,7 @@ COPY plugins ${AIRFLOW_HOME}/plugins
 
 ENV PYTHONPATH ${AIRFLOW_HOME}
 
-RUN chown -R airflow: ${AIRFLOW_HOME}
-
 EXPOSE 8080 5555 8793
-
-USER airflow
-COPY requirements.txt .
-RUN pip install --user -r requirements.txt
 
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint.sh"]

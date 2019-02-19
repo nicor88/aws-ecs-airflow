@@ -161,11 +161,12 @@ Resources:
                   - s3:*
                 Effect: Allow
                 Resource: "*"
+                Sid: s3
               - Action:
                   - logs:*
                 Effect: Allow
                 Resource: "*"
-                Sid: s3
+                Sid: logs
           PolicyName: AirflowRolePolicy
 
   AirflowLogGroup:

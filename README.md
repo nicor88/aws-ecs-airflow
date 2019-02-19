@@ -4,7 +4,7 @@ Setup to run Airflow in AWS ECS containers
 ## Requirements
 * Docker
 * [awscli](https://aws.amazon.com/cli/)
-* AWS IAM User
+
 
 ## Local Development
 It's possible to start Airflow locally simply running:
@@ -21,7 +21,7 @@ To deploy Airflow setup we need first to create the container repository for our
 We will user ECR (Elastic Container Repository).
 * Create a new repository using:
 	```
-	aws ecr create-repository --repository-name airflow-ecs --profile your_aws_profile
+	aws ecr create-repository --repository-name airflow --profile your_aws_profile
 	```
 * Login to ECR
   ```
@@ -30,14 +30,14 @@ We will user ECR (Elastic Container Repository).
   ```
 * Build the image locally:
   ```
-  docker build -t airflow-ecs .
+  docker build -t airflow .
 
   ```
 
 * Push Airflow Image to ECR:
   ```
-  docker tag airflow-ecs:latest your_aws_account_number.dkr.ecr.your_aws_region.amazonaws.com/airflow-ecs:latest
-  docker push your_aws_account_number.dkr.ecr.your_aws_region.amazonaws.com/airflow-ecs:latest
+  docker tag airflow:latest your_aws_account_number.dkr.ecr.your_aws_region.amazonaws.com/airflow:latest
+  docker push your_aws_account_number.dkr.ecr.your_aws_region.amazonaws.com/airflow:latest
 
   ```
   **NOTE**: replace _your_aws_account_number_ and _your_aws_region_
@@ -51,5 +51,5 @@ AWS_DEFAULT_PROFILE=nicor88 make create
 ### Clean up
 ```
 cd infrastructure
-AWS_DEFAULT_PROFILE=nicor88 make clean
+AWS_DEFAULT_PROFILE=your_profile make clean
 ```

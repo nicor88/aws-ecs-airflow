@@ -1,0 +1,39 @@
+[
+    {
+      "name": "postgres",
+      "image": "postgres:10.4",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5432,
+          "hostPort": 5432
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "ecs/fargate/airflow-dev",
+            "awslogs-region": "us-east-1",
+            "awslogs-stream-prefix": "postgres"
+        }
+      },
+      "environment": [
+        {
+            "name": "POSTGRES_USER",
+            "value": "airflow"
+        },
+        {
+            "name": "POSTGRES_PASSWORD",
+            "value": "airflow"
+        },
+        {
+            "name": "POSTGRES_DB",
+            "value": "airflow"
+        },
+        {
+            "name": "POSTGRES_PORT",
+            "value": "5432"
+        }
+        ]
+    }
+]

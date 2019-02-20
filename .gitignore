@@ -112,4 +112,5 @@ postgres_data/
 # Infrastructure
 infrastructure/terraform/.terraform
 infrastructure/terraform/terraform.tfstate
+infrastructure/terraform/.terraform.tfstate.lock.info
 infrastructure/terraform/terraform.tfstate.backup

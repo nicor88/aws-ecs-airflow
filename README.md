@@ -42,13 +42,14 @@ When the infrastructure is provisioned (the RDS metadata DB will take a while) c
 <pre>
 bash scripts/push_to_ecr.sh airflow-dev
 </pre>
+By default the repo name created with terraform is `airflow-dev`
 Without this command the ECS services will fail to fetch the `latest` image from ECR
 
 ### Deploy new Airflow application
 To deploy an update version of Airflow you need to push a new container image to ECR.
 You can simply doing that running:
 <pre>
-./scripts/deploy.sh airflow-dev # by default the repo name create with the infra is airflow-dev
+./scripts/deploy.sh airflow-dev
 </pre>
 
 The deployment script will take care of:

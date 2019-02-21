@@ -6,7 +6,7 @@ resource "aws_ecs_service" "web_server_service" {
     launch_type = "FARGATE"
     deployment_maximum_percent = 200
     deployment_minimum_healthy_percent = 100
-    health_check_grace_period_seconds = 300
+    health_check_grace_period_seconds = 60
 
     network_configuration {
         security_groups = ["${aws_security_group.web_server_ecs_internal.id}"]

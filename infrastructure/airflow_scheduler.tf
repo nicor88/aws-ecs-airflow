@@ -81,8 +81,8 @@ resource "aws_ecs_task_definition" "scheduler" {
     "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-            "awslogs-group": "ecs/fargate/${var.project_name}-${var.stage}",
-            "awslogs-region": "us-east-1",
+            "awslogs-group": "${var.log_group_name}/${var.project_name}-${var.stage}",
+            "awslogs-region": "${var.aws_region}",
             "awslogs-stream-prefix": "scheduler"
         }
     }

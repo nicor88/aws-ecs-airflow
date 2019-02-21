@@ -25,13 +25,12 @@ resource "aws_ecr_lifecycle_policy" "docker_repository_lifecycly" {
 EOF
 }
 
-
 resource "aws_ecs_cluster" "ecs_cluster" {
   name = "${var.project_name}-${var.stage}"
 }
 
 resource "aws_cloudwatch_log_group" "log_group" {
-  name = "ecs/fargate/${var.project_name}-${var.stage}"
+  name = "${var.log_group_name}/${var.project_name}-${var.stage}"
   retention_in_days = 5
 }
 
@@ -69,7 +68,13 @@ resource "aws_iam_policy" "ecs_task_policy" {
         "ecr:GetAuthorizationToken",
         "ecr:BatchCheckLayerAvailability",
         "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
+        "ecr:BatchGetImage"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    },
+    {
+      "Action": [
         "logs:CreateLogStream",
         "logs:PutLogEvents"
       ],

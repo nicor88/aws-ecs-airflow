@@ -32,7 +32,7 @@ resource "aws_elasticache_cluster" "celery_backend" {
     cluster_id = "${var.project_name}-${var.stage}"
     engine = "redis"
     engine_version = "4.0.10"
-    node_type = "cache.t2.small"
+    node_type = "${var.celery_backend_instance_type}"
     num_cache_nodes = 1
     port = "6379"
     subnet_group_name = "${aws_elasticache_subnet_group.airflow_redis_subnet_group.id}"

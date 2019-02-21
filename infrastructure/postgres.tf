@@ -50,7 +50,7 @@ resource "aws_db_instance" "metadata_db" {
     
     # database name 
     name = "${var.project_name}"
-    instance_class = "db.t3.micro"
+    instance_class = "${var.metadata_db_instance_type}"
     allocated_storage = 20
     engine = "postgres"
     engine_version = "10.6"

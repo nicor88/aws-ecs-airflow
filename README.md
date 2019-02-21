@@ -20,14 +20,17 @@ The current setup is based on [Celery Workers](https://airflow.apache.org/howto/
 ## Deploy Airflow on AWS ECS
 To run Airflow in AWS we will use ECS (Elastic Container Service).
 
-### Deploy using Terraform
+### Deploy Instrastructure using Terraform
 <pre>
-cd infrastructure/terraform
+cd infrastructure
 terraform init
 terraform apply
 </pre>
 
-When the infrastructure is provisioned, check the if the ECR repo is created then
+When the infrastructure is provisioned (the RDS metadata DB will take a while) check the if the ECR repository is created then run:
 <pre>
 bash scripts/push_to_ecr.sh airflow-dev
 </pre>
+Without this command the ECS services will fail to fetch the `latest` image from ECR
+
+### Deploy new Airflow application

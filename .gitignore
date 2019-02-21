@@ -110,7 +110,7 @@ postgres_data/
 .idea
 
 # Infrastructure
-infrastructure/terraform/.terraform
-infrastructure/terraform/terraform.tfstate
-infrastructure/terraform/.terraform.tfstate.lock.info
-infrastructure/terraform/terraform.tfstate.backup
+infrastructure/.terraform
+infrastructure/terraform.tfstate
+infrastructure/.terraform.tfstate.lock.info
+infrastructure/terraform.tfstate.backup

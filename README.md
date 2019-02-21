@@ -55,4 +55,3 @@ You can simply doing that running:
 The deployment script will take care of:
 * push a new ECR image to your repository
 * re-deploy the new ECS services with the updated image
-

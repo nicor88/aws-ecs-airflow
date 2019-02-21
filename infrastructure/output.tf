@@ -1,6 +1,6 @@
-# output "metadata_db_postgres_password" {
-#   value = "${random_string.metadata_db_password.result}"
-# }
+output "metadata_db_postgres_password" {
+  value = "${random_string.metadata_db_password.result}"
+}
 
 output "metadata_db_postgres_endpoint" {
   value = "${aws_db_instance.metadata_db.endpoint}"

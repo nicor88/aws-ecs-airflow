@@ -108,6 +108,7 @@ postgres_data/
 
 # IDE
 .idea
+.vscode
 
 # Infrastructure
 infrastructure/.terraform

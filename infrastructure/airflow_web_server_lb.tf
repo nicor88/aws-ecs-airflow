@@ -14,7 +14,7 @@ resource "aws_alb_target_group" "airflow_web_server" {
     health_check {
         interval = 10
         port = 8080
-        protocol = "http"
+        protocol = "HTTP"
         path = "/health"
         timeout = 5
         healthy_threshold = 5

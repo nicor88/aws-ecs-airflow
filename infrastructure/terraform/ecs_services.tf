@@ -2,13 +2,16 @@ resource "aws_ecs_service" "web_server_service" {
     name = "${var.project_name}-${var.stage}-web-server"
     cluster = "${aws_ecs_cluster.ecs_cluster.id}"
     task_definition = "${aws_ecs_task_definition.web_server.arn}"
-    desired_count = 1 
+    desired_count = 2
     launch_type = "FARGATE"
+    deployment_maximum_percent = 200
+    deployment_minimum_healthy_percent = 100
+    health_check_grace_period_seconds = 300
 
     network_configuration {
         security_groups = ["${aws_security_group.web_server_ecs_internal.id}"]
         subnets         = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
-        assign_public_ip = "true"
+        assign_public_ip = true
     }
 
     load_balancer {
@@ -29,9 +32,9 @@ resource "aws_ecs_service" "scheduler_service" {
     desired_count = 1 
     launch_type = "FARGATE"
     network_configuration {
-    security_groups = ["${aws_security_group.scheduler.id}"]
-    subnets         = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
-    assign_public_ip = "true"
+        security_groups = ["${aws_security_group.scheduler.id}"]
+        subnets = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
+        assign_public_ip = true # when using a NAT can be put to false
     }
 }
 
@@ -42,9 +45,9 @@ resource "aws_ecs_service" "workers_service" {
     desired_count = 3
     launch_type = "FARGATE"
     network_configuration {
-    security_groups = ["${aws_security_group.workers.id}"]
-    subnets         = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
-    assign_public_ip = "true"
+        security_groups = ["${aws_security_group.workers.id}"]
+        subnets = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
+        assign_public_ip = true # when using a NAT can be put to false
     }
 }
 
@@ -55,8 +58,8 @@ resource "aws_ecs_service" "flower_service" {
     desired_count = 1 
     launch_type = "FARGATE"
     network_configuration {
-    security_groups = ["${aws_security_group.flower.id}"]
-    subnets         = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
-    assign_public_ip = "true"
+        security_groups = ["${aws_security_group.flower.id}"]
+        subnets = ["${aws_subnet.public-subnet-1.id}", "${aws_subnet.public-subnet-2.id}", "${aws_subnet.public-subnet-3.id}"]
+        assign_public_ip = true
     }
 }

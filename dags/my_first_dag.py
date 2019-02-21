@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 default_args = {
     'owner': 'nicor88',
-    'start_date': datetime(2017, 12, 25),
+    'start_date': datetime(2019, 2, 20),
     'depends_on_past': False,
     'provide_context': True
 }
 
 dag = DAG('my_first_dag',
           description='My first Airflow DAG',
-          schedule_interval=None,
+          schedule_interval='*/5 * * * *',
           catchup=False,
           default_args=default_args)
 
@@ -38,16 +38,27 @@ def task_2(**kwargs):
     return {'output': 'hello world 2', 'execution_time': str(datetime.now())}
 
 
+def task_3(**kwargs):
+    logger.info('Log from task 3')
+    return {'output': 'hello world 3', 'execution_time': str(datetime.now())}
+
+
 t1 = PythonOperator(
     task_id='task_1',
     dag=dag,
     python_callable=task_1
 )
+
 t2 = PythonOperator(
     task_id='task_2',
     dag=dag,
     python_callable=task_2
 )
 
-t1 >> t2
-# t2.set_upstream(t1)
+t3 = PythonOperator(
+    task_id='task_3',
+    dag=dag,
+    python_callable=task_3
+)
+
+t1 >> [t2, t3]

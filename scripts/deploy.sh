@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
 IMAGE_NAME=$1
-# create a new commit hash at each deployment
-COMMIT_HASH=test_deployment
+# TODO generate a random string
+
+COMMIT_HASH=$(hexdump -n 16 -v -e '/1 "%02X"' -e '/16 "\n"' /dev/urandom)
+
+echo $COMMIT_HASH
 
 ### ECR - build images and push to remote repository
 
@@ -17,9 +20,8 @@ docker tag $IMAGE_NAME $AWS_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$I
 docker push $AWS_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:latest
 
 # tag and push image with commit hash
-COMMIT_HASH=your_unique_identifier
 docker tag $IMAGE_NAME $AWS_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$COMMIT_HASH
 docker push $AWS_ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$COMMIT_HASH
 
 cd infrastructure/terraform
-terraform apply -var 'image_version=$COMMIT_HASH' -auto-approve
+terraform apply -var "image_version=$COMMIT_HASH" -auto-approve

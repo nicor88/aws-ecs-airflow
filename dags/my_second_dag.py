@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 default_args = {
     'owner': 'nicor88',
-    'start_date': datetime(2017, 12, 25),
+    'start_date': datetime(2019, 2, 20),
     'depends_on_past': False,
     'provide_context': True
 }
@@ -50,4 +50,3 @@ t2 = PythonOperator(
 )
 
 t1 >> t2
-# t2.set_upstream(t1)

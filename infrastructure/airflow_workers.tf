@@ -4,17 +4,17 @@ resource "aws_security_group" "workers" {
     vpc_id = "${aws_vpc.vpc.id}"
 
     ingress {
-        from_port   = 8793
-        to_port     = 8793
-        protocol    = "tcp"
+        from_port = 8793
+        to_port = 8793
+        protocol = "tcp"
         cidr_blocks = ["${var.base_cidr_block}/16"]
     }
 
     egress {
-        from_port       = 0
-        to_port         = 0
-        protocol        = "-1"
-        cidr_blocks     = ["0.0.0.0/0"]
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     tags = {
@@ -28,8 +28,8 @@ resource "aws_ecs_task_definition" "workers" {
   network_mode = "awsvpc"
   execution_role_arn = "${aws_iam_role.ecs_task_iam_role.arn}"
   requires_compatibilities = ["FARGATE"]
-  cpu = "1024" # the valid CPU amount for 2 GB is from from 256 to 1024
-  memory = "2048"
+  cpu = "512"
+  memory = "2048" # the valid CPU amount for 2 GB is from from 256 to 1024
   container_definitions = <<EOF
 [
   {

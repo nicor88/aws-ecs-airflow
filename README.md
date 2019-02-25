@@ -19,11 +19,18 @@ Setup to run Airflow in AWS ECS containers
 
 
 ## Local Development
-It's possible to start Airflow locally simply running:
-```
-export AIRFLOW_FERNET_KEY="your_fernet_key" # more about that here https://cryptography.io/en/latest/fernet/
-docker-compose up --build
-```
+* Generate a Fernet Key:
+  <pre>
+  pip install cryptography
+  export AIRFLOW_FERNET_KEY=$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+  </pre>
+  More about that [here](https://cryptography.io/en/latest/fernet/)
+
+* Start Airflow locally simply running:
+  <pre>
+  docker-compose up --build
+  </pre
+
 If everything runs correctly you can reach Airflow navigating to [localhost:8080](http://localhost:8080).
 The current setup is based on [Celery Workers](https://airflow.apache.org/howto/executor/use-celery.html). You can monitor how many workers are currently active using Flower, visiting [localhost:5555](http://localhost:5555)
 

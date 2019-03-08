@@ -14,7 +14,8 @@ ARG AIRFLOW_VERSION=1.10.0
 
 # it's possible to use v1-10-stable, but it's a development branch
 ARG AIRFLOW_HOME=/usr/local/airflow
-ARG REDIS_VERSION=4.1.1
+ARG CELERY_REDIS_VERSION=4.2.0
+ARG PYTHON_REDIS_VERSION=3.2.0
 ENV AIRFLOW_GPL_UNIDECODE=yes
 
 # Define en_US.
@@ -63,10 +64,11 @@ RUN set -ex \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
     && pip install git+https://github.com/apache/incubator-airflow.git@$AIRFLOW_VERSION#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
-    && pip install redis==2.10.6 \
-    && pip install celery[redis]==$REDIS_VERSION \
+    && pip install redis==$PYTHON_REDIS_VERSION \
+    && pip install celery[redis]==$CELERY_REDIS_VERSION \
     && pip install flask_oauthlib \
     && pip install psycopg2-binary \
+    && pip install tornado==5.1.1 \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \

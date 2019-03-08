@@ -1,7 +1,8 @@
 version: '3'
+
 services:
   redis:
-    image: 'redis:4.0.10'
+    image: 'redis:5.0.3'
     command: redis-server
 
   postgres:

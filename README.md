@@ -62,3 +62,9 @@ You can simply doing that running:
 The deployment script will take care of:
 * push a new ECR image to your repository
 * re-deploy the new ECS services with the updated image
+
+## TODO
+* Create Private Subenets
+* Move ECS containers to Private Subnets
+* Use ECS private Links for Private Subnets
+* Improve ECS Task and Service Role

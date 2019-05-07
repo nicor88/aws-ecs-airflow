@@ -37,7 +37,7 @@ The current setup is based on [Celery Workers](https://airflow.apache.org/howto/
 ## Deploy Airflow on AWS ECS
 To run Airflow in AWS we will use ECS (Elastic Container Service).
 
-### Deploy Instrastructure using Terraform
+### Deploy Infrastructure using Terraform
 <pre>
 cd infrastructure
 terraform init

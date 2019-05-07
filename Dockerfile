@@ -10,13 +10,15 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
 # Airflow
-ARG AIRFLOW_VERSION=1.10.0
-
 # it's possible to use v1-10-stable, but it's a development branch
-ARG AIRFLOW_HOME=/usr/local/airflow
+ARG AIRFLOW_VERSION=1.10.3
+ENV AIRFLOW_HOME=/usr/local/airflow
+ENV AIRFLOW_GPL_UNIDECODE=yes
+# celery config
 ARG CELERY_REDIS_VERSION=4.2.0
 ARG PYTHON_REDIS_VERSION=3.2.0
-ENV AIRFLOW_GPL_UNIDECODE=yes
+
+ARG TORNADO_VERSION=5.1.1
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -42,7 +44,7 @@ RUN set -ex \
     && apt-get update -yqq \
     && apt-get upgrade -yqq \
     && apt-get install -yqq --no-install-recommends \
-        $buildDeps \
+        ${buildDeps} \
         sudo \
         python3-pip \
         python3-requests \
@@ -63,13 +65,13 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install git+https://github.com/apache/incubator-airflow.git@$AIRFLOW_VERSION#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
-    && pip install redis==$PYTHON_REDIS_VERSION \
-    && pip install celery[redis]==$CELERY_REDIS_VERSION \
+    && pip install git+https://github.com/apache/incubator-airflow.git@${AIRFLOW_VERSION}#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
+    && pip install redis==${PYTHON_REDIS_VERSION} \
+    && pip install celery[redis]==${CELERY_REDIS_VERSION} \
     && pip install flask_oauthlib \
     && pip install psycopg2-binary \
-    && pip install tornado==5.1.1 \
-    && apt-get purge --auto-remove -yqq $buildDeps \
+    && pip install tornado==${TORNADO_VERSION} \
+    && apt-get purge --auto-remove -yqq ${buildDeps} \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
     && rm -rf \
@@ -82,6 +84,7 @@ RUN set -ex \
 
 COPY config/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 USER airflow

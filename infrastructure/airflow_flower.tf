@@ -1,40 +1,45 @@
 resource "aws_security_group" "flower" {
-    name = "${var.project_name}-${var.stage}-flower-sg"
-    description = "Allow all inbound traffic for Flower"
-    vpc_id = "${aws_vpc.vpc.id}"
+  name        = "${var.project_name}-${var.stage}-flower-sg"
+  description = "Allow all inbound traffic for Flower"
+  vpc_id      = aws_vpc.vpc.id
 
-    ingress {
-        from_port = 5555
-        to_port = 5555
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+  ingress {
+    from_port   = 5555
+    to_port     = 5555
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-    egress {
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-    tags = {
-        Name = "${var.project_name}-${var.stage}-flower-sg"
-    }
+  tags = {
+    Name = "${var.project_name}-${var.stage}-flower-sg"
+  }
 }
 
-
 resource "aws_ecs_task_definition" "flower" {
-  family = "${var.project_name}-${var.stage}-flower"
-  network_mode = "awsvpc"
-  execution_role_arn = "${aws_iam_role.ecs_task_iam_role.arn}"
+  family                   = "${var.project_name}-${var.stage}-flower"
+  network_mode             = "awsvpc"
+  execution_role_arn       = aws_iam_role.ecs_task_iam_role.arn
   requires_compatibilities = ["FARGATE"]
-  cpu = "512" # the valid CPU amount for 2 GB is from from 256 to 1024
-  memory = "1024"
+  cpu                      = "512" # the valid CPU amount for 2 GB is from from 256 to 1024
+  memory                   = "1024"
   container_definitions = <<EOF
 [
   {
     "name": "airflow_flower",
-    "image": ${replace(jsonencode("${aws_ecr_repository.docker_repository.repository_url}:${var.image_version}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")} ,
+    "image": ${replace(
+jsonencode(
+"${aws_ecr_repository.docker_repository.repository_url}:${var.image_version}",
+),
+"/\"([0-9]+\\.?[0-9]*)\"/",
+"$1",
+)} ,
     "essential": true,
     "portMappings": [
       {
@@ -48,7 +53,13 @@ resource "aws_ecs_task_definition" "flower" {
     "environment": [
       {
         "name": "REDIS_HOST",
-        "value": ${replace(jsonencode("${aws_elasticache_cluster.celery_backend.cache_nodes.0.address}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+        "value": ${replace(
+jsonencode(
+aws_elasticache_cluster.celery_backend.cache_nodes[0].address,
+),
+"/\"([0-9]+\\.?[0-9]*)\"/",
+"$1",
+)}
       },
       {
         "name": "REDIS_PORT",
@@ -56,7 +67,11 @@ resource "aws_ecs_task_definition" "flower" {
       },
       {
         "name": "POSTGRES_HOST",
-        "value": ${replace(jsonencode("${aws_db_instance.metadata_db.address}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+        "value": ${replace(
+jsonencode(aws_db_instance.metadata_db.address),
+"/\"([0-9]+\\.?[0-9]*)\"/",
+"$1",
+)}
       },
       {
         "name": "POSTGRES_PORT",
@@ -68,7 +83,11 @@ resource "aws_ecs_task_definition" "flower" {
       },
       {
           "name": "POSTGRES_PASSWORD",
-          "value": ${replace(jsonencode("${random_string.metadata_db_password.result}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+          "value": ${replace(
+jsonencode(random_string.metadata_db_password.result),
+"/\"([0-9]+\\.?[0-9]*)\"/",
+"$1",
+)}
       },
       {
           "name": "POSTGRES_DB",
@@ -102,4 +121,6 @@ resource "aws_ecs_task_definition" "flower" {
   }
 ]
 EOF
-}
+
+    }
+

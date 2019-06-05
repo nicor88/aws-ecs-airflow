@@ -1,9 +1,9 @@
 resource "aws_ecr_repository" "docker_repository" {
-    name = "${var.project_name}-${var.stage}"
+  name = "${var.project_name}-${var.stage}"
 }
 
 resource "aws_ecr_lifecycle_policy" "docker_repository_lifecycly" {
-  repository = "${aws_ecr_repository.docker_repository.name}"
+  repository = aws_ecr_repository.docker_repository.name
 
   policy = <<EOF
 {
@@ -23,6 +23,7 @@ resource "aws_ecr_lifecycle_policy" "docker_repository_lifecycly" {
     ]
 }
 EOF
+
 }
 
 resource "aws_ecs_cluster" "ecs_cluster" {
@@ -53,13 +54,13 @@ resource "aws_iam_role" "ecs_task_iam_role" {
   ]
 }
 EOF
+
 }
 
-
 resource "aws_iam_policy" "ecs_task_policy" {
-  name        = "${var.project_name}-${var.stage}"
+name = "${var.project_name}-${var.stage}"
 
-  policy = <<EOF
+policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -84,9 +85,11 @@ resource "aws_iam_policy" "ecs_task_policy" {
   ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy_attachment" "attach_policy" {
-  role       = "${aws_iam_role.ecs_task_iam_role.name}"
-  policy_arn = "${aws_iam_policy.ecs_task_policy.arn}"
+role = aws_iam_role.ecs_task_iam_role.name
+policy_arn = aws_iam_policy.ecs_task_policy.arn
 }
+

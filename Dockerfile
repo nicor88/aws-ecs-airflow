@@ -48,7 +48,7 @@ RUN set -ex \
         sudo \
         python3-pip \
         python3-requests \
-        mysql-client \
+        default-mysql-client \
         default-libmysqlclient-dev \
         apt-utils \
         curl \

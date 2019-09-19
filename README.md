@@ -40,7 +40,8 @@ To run Airflow in AWS we will use ECS (Elastic Container Service).
 ### Deploy Infrastructure using Terraform
 <pre>
 cd infrastructure
-terraform init
+terraform get
+terraform init -upgrade;
 terraform apply
 </pre>
 By default the infrastructure is deployed in `eu-east-1`.

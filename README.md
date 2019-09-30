@@ -38,12 +38,21 @@ The current setup is based on [Celery Workers](https://airflow.apache.org/howto/
 To run Airflow in AWS we will use ECS (Elastic Container Service).
 
 ### Deploy Infrastructure using Terraform
+Run the following commands:
+<pre>
+make infra-init
+make infra-plan
+make infra-apply
+</pre>
+
+or alternatively
 <pre>
 cd infrastructure
 terraform get
 terraform init -upgrade;
 terraform apply
 </pre>
+
 By default the infrastructure is deployed in `eu-east-1`.
 
 When the infrastructure is provisioned (the RDS metadata DB will take a while) check the if the ECR repository is created then run:
@@ -65,7 +74,7 @@ The deployment script will take care of:
 * re-deploy the new ECS services with the updated image
 
 ## TODO
-* Create Private Subenets
+* Create Private Subnets
 * Move ECS containers to Private Subnets
 * Use ECS private Links for Private Subnets
 * Improve ECS Task and Service Role

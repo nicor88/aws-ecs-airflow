@@ -34,3 +34,11 @@ variable "metadata_db_instance_type" {
 variable "celery_backend_instance_type" {
    default = "cache.t2.small"
 }
+
+variable "use_flower" {
+   default = true
+}
+
+variable "num_workers" {
+   default = 2
+}

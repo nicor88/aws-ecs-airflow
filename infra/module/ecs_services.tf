@@ -31,7 +31,7 @@ resource "aws_ecs_service" "scheduler_service" {
     name = "${var.project_name}-${var.stage}-scheduler"
     cluster = "${aws_ecs_cluster.ecs_cluster.id}"
     task_definition = "${aws_ecs_task_definition.scheduler.arn}"
-    desired_count = 1 
+    desired_count = 1
     launch_type = "FARGATE"
     
     network_configuration {
@@ -50,7 +50,7 @@ resource "aws_ecs_service" "workers_service" {
     name = "${var.project_name}-${var.stage}-workers"
     cluster = "${aws_ecs_cluster.ecs_cluster.id}"
     task_definition = "${aws_ecs_task_definition.workers.arn}"
-    desired_count = 2
+    desired_count = var.num_workers
     launch_type = "FARGATE"
 
     network_configuration {
@@ -69,7 +69,7 @@ resource "aws_ecs_service" "flower_service" {
     name = "${var.project_name}-${var.stage}-flower"
     cluster = "${aws_ecs_cluster.ecs_cluster.id}"
     task_definition = "${aws_ecs_task_definition.flower.arn}"
-    desired_count = 1 
+    desired_count = var.use_flower ? 1 : 0
     launch_type = "FARGATE"
 
     network_configuration {

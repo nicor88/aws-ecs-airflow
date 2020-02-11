@@ -19,6 +19,7 @@ ARG CELERY_REDIS_VERSION=4.2.0
 ARG PYTHON_REDIS_VERSION=3.2.0
 
 ARG TORNADO_VERSION=5.1.1
+ARG WERKZEUG_VERSION=0.16.0
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -66,6 +67,7 @@ RUN set -ex \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
     && pip install git+https://github.com/apache/incubator-airflow.git@${AIRFLOW_VERSION}#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
+    && pip install werkzeug==${WERKZEUG_VERSION} \
     && pip install redis==${PYTHON_REDIS_VERSION} \
     && pip install celery[redis]==${CELERY_REDIS_VERSION} \
     && pip install flask_oauthlib \

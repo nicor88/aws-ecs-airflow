@@ -3,7 +3,7 @@ resource "aws_ecr_repository" "docker_repository" {
 }
 
 resource "aws_ecr_lifecycle_policy" "docker_repository_lifecycly" {
-  repository = "${aws_ecr_repository.docker_repository.name}"
+  repository = aws_ecr_repository.docker_repository.name
 
   policy = <<EOF
 {
@@ -87,6 +87,6 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "attach_policy" {
-  role       = "${aws_iam_role.ecs_task_iam_role.name}"
-  policy_arn = "${aws_iam_policy.ecs_task_policy.arn}"
+  role       = aws_iam_role.ecs_task_iam_role.name
+  policy_arn = aws_iam_policy.ecs_task_policy.arn
 }

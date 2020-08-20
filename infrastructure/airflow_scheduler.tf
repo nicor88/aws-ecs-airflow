@@ -1,7 +1,7 @@
 resource "aws_security_group" "scheduler" {
     name = "${var.project_name}-${var.stage}-scheduler-sg"
     description = "Airflow scheduler security group"
-    vpc_id = "${aws_vpc.vpc.id}"
+    vpc_id = aws_vpc.vpc.id
 
     egress {
         from_port       = 0
@@ -19,7 +19,7 @@ resource "aws_security_group" "scheduler" {
 resource "aws_ecs_task_definition" "scheduler" {
   family = "${var.project_name}-${var.stage}-scheduler"
   network_mode = "awsvpc"
-  execution_role_arn = "${aws_iam_role.ecs_task_iam_role.arn}"
+  execution_role_arn = aws_iam_role.ecs_task_iam_role.arn
   requires_compatibilities = ["FARGATE"]
   cpu = "1024" # the valid CPU amount for 2 GB is from from 256 to 1024
   memory = "2048"
@@ -35,7 +35,7 @@ resource "aws_ecs_task_definition" "scheduler" {
     "environment": [
       {
         "name": "REDIS_HOST",
-        "value": ${replace(jsonencode("${aws_elasticache_cluster.celery_backend.cache_nodes.0.address}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+        "value": ${replace(jsonencode(aws_elasticache_cluster.celery_backend.cache_nodes.0.address), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
       },
       {
         "name": "REDIS_PORT",
@@ -43,7 +43,7 @@ resource "aws_ecs_task_definition" "scheduler" {
       },
       {
         "name": "POSTGRES_HOST",
-        "value": ${replace(jsonencode("${aws_db_instance.metadata_db.address}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+        "value": ${replace(jsonencode(aws_db_instance.metadata_db.address), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
       },
       {
         "name": "POSTGRES_PORT",
@@ -55,7 +55,7 @@ resource "aws_ecs_task_definition" "scheduler" {
       },
       {
           "name": "POSTGRES_PASSWORD",
-          "value": ${replace(jsonencode("${random_string.metadata_db_password.result}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+          "value": ${replace(jsonencode(random_string.metadata_db_password.result), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
       },
       {
           "name": "POSTGRES_DB",

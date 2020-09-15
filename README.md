@@ -9,12 +9,12 @@ Setup to run Airflow in AWS ECS containers
 ### AWS
 * AWS IAM User for the infrastructure deployment, with admin permissions
 * [awscli](https://aws.amazon.com/cli/), intall running `pip install awscli`
-* [terraform](https://www.terraform.io/downloads.html)
+* [terraform >= 0.12](https://www.terraform.io/downloads.html)
 * setup your IAM User credentials inside `~/.aws/credentials`
 * setup these env variables in your .zshrc or .bashrc, or in your the terminal session that you are going to use
   <pre>
   export AWS_ACCOUNT=your_account_id
-  export AWS_DEFAULT_REGION=eu-east-1 # it's the default region that needs to be setup also in infrastructure/config.tf
+  export AWS_DEFAULT_REGION=us-east-1 # it's the default region that needs to be setup also in infrastructure/config.tf
   </pre>
 
 
@@ -50,10 +50,11 @@ or alternatively
 cd infrastructure
 terraform get
 terraform init -upgrade;
+terraform plan
 terraform apply
 </pre>
 
-By default the infrastructure is deployed in `eu-east-1`.
+By default the infrastructure is deployed in `us-east-1`.
 
 When the infrastructure is provisioned (the RDS metadata DB will take a while) check the if the ECR repository is created then run:
 <pre>

@@ -1,7 +1,7 @@
 resource "aws_security_group" "workers" {
     name = "${var.project_name}-${var.stage}-workers-sg"
     description = "Airflow Celery Workers security group"
-    vpc_id = "${aws_vpc.vpc.id}"
+    vpc_id = aws_vpc.vpc.id
 
     ingress {
         from_port = 8793
@@ -26,7 +26,7 @@ resource "aws_security_group" "workers" {
 resource "aws_ecs_task_definition" "workers" {
   family = "${var.project_name}-${var.stage}-workers"
   network_mode = "awsvpc"
-  execution_role_arn = "${aws_iam_role.ecs_task_iam_role.arn}"
+  execution_role_arn = aws_iam_role.ecs_task_iam_role.arn
   requires_compatibilities = ["FARGATE"]
   cpu = "512"
   memory = "2048" # the valid CPU amount for 2 GB is from from 256 to 1024
@@ -48,7 +48,7 @@ resource "aws_ecs_task_definition" "workers" {
     "environment": [
       {
         "name": "REDIS_HOST",
-        "value": ${replace(jsonencode("${aws_elasticache_cluster.celery_backend.cache_nodes.0.address}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+        "value": ${replace(jsonencode(aws_elasticache_cluster.celery_backend.cache_nodes.0.address), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
       },
       {
         "name": "REDIS_PORT",
@@ -56,7 +56,7 @@ resource "aws_ecs_task_definition" "workers" {
       },
       {
         "name": "POSTGRES_HOST",
-        "value": ${replace(jsonencode("${aws_db_instance.metadata_db.address}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+        "value": ${replace(jsonencode(aws_db_instance.metadata_db.address), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
       },
       {
         "name": "POSTGRES_PORT",
@@ -68,7 +68,7 @@ resource "aws_ecs_task_definition" "workers" {
       },
       {
           "name": "POSTGRES_PASSWORD",
-          "value": ${replace(jsonencode("${random_string.metadata_db_password.result}"), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
+          "value": ${replace(jsonencode(random_string.metadata_db_password.result), "/\"([0-9]+\\.?[0-9]*)\"/", "$1")}
       },
       {
           "name": "POSTGRES_DB",

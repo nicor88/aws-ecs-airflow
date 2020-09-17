@@ -9,7 +9,7 @@ Setup to run Airflow in AWS ECS containers
 ### AWS
 * AWS IAM User for the infrastructure deployment, with admin permissions
 * [awscli](https://aws.amazon.com/cli/), intall running `pip install awscli`
-* [terraform >= 0.12](https://www.terraform.io/downloads.html)
+* [terraform >= 0.13](https://www.terraform.io/downloads.html)
 * setup your IAM User credentials inside `~/.aws/credentials`
 * setup these env variables in your .zshrc or .bashrc, or in your the terminal session that you are going to use
   <pre>

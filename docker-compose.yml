@@ -35,6 +35,7 @@ services:
       - AIRFLOW_BASE_URL=http://localhost:8080
       - ENABLE_REMOTE_LOGGING=False
       - STAGE=dev
+      - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=15
     volumes:
         - ./dags:/usr/local/airflow/dags
     ports:

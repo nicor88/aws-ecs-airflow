@@ -108,3 +108,25 @@ services:
       - ENABLE_REMOTE_LOGGING=False
       - STAGE=dev
     command: worker
+
+#  worker2:
+#    image: airflow:latest
+#    restart: always
+#    depends_on:
+#      - webserver
+#      - scheduler
+#    volumes:
+#      - ./dags:/usr/local/airflow/dags
+#    environment:
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - POSTGRES_HOST=postgres
+#      - POSTGRES_PORT=5432
+#      - POSTGRES_USER=airflow
+#      - POSTGRES_PASSWORD=airflow
+#      - POSTGRES_DB=airflow
+#      - FERNET_KEY=${AIRFLOW_FERNET_KEY}
+#      - AIRFLOW_BASE_URL=http://localhost:8080
+#      - ENABLE_REMOTE_LOGGING=False
+#      - STAGE=dev
+#    command: worker

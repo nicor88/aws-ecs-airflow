@@ -1,8 +1,8 @@
 # BUILD: docker build --rm -t airflow .
 # ORIGINAL SOURCE: https://github.com/puckel/docker-airflow
 
-FROM python:3.6-slim
-LABEL version="1.0"
+FROM python:3.8.5-slim
+LABEL version="1.1"
 LABEL maintainer="nicor88"
 
 # Never prompts the user for choices on installation/configuration of packages
@@ -11,7 +11,7 @@ ENV TERM linux
 
 # Airflow
 # it's possible to use v1-10-stable, but it's a development branch
-ARG AIRFLOW_VERSION=1.10.3
+ARG AIRFLOW_VERSION=1.10.11
 ENV AIRFLOW_HOME=/usr/local/airflow
 ENV AIRFLOW_GPL_UNIDECODE=yes
 # celery config
@@ -61,18 +61,19 @@ RUN set -ex \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
     && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
     && pip install -U pip setuptools wheel \
-    && pip install Cython \
-    && pip install pytz \
-    && pip install pyOpenSSL \
-    && pip install ndg-httpsclient \
-    && pip install pyasn1 \
-    && pip install git+https://github.com/apache/incubator-airflow.git@${AIRFLOW_VERSION}#egg=apache-airflow[async,crypto,celery,kubernetes,jdbc,password,postgres,s3,slack] \
-    && pip install werkzeug==${WERKZEUG_VERSION} \
-    && pip install redis==${PYTHON_REDIS_VERSION} \
-    && pip install celery[redis]==${CELERY_REDIS_VERSION} \
-    && pip install flask_oauthlib \
-    && pip install psycopg2-binary \
-    && pip install tornado==${TORNADO_VERSION} \
+    && pip install --no-cache-dir pytz \
+    && pip install --no-cache-dir pyOpenSSL \
+    && pip install --no-cache-dir ndg-httpsclient \
+    && pip install --no-cache-dir pyasn1 \
+    && pip install --no-cache-dir typing_extensions \
+    && pip install --no-cache-dir mysqlclient \
+    && pip install --no-cache-dir apache-airflow[async,aws,crypto,celery,github_enterprise,kubernetes,jdbc,postgres,password,s3,slack,ssh]==${AIRFLOW_VERSION} \
+    && pip install --no-cache-dir werkzeug==${WERKZEUG_VERSION} \
+    && pip install --no-cache-dir redis==${PYTHON_REDIS_VERSION} \
+    && pip install --no-cache-dir celery[redis]==${CELERY_REDIS_VERSION} \
+    && pip install --no-cache-dir flask_oauthlib \
+    && pip install --no-cache-dir psycopg2-binary \
+    && pip install --no-cache-dir tornado==${TORNADO_VERSION} \
     && apt-get purge --auto-remove -yqq ${buildDeps} \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
@@ -84,22 +85,21 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
+
 COPY config/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY dags ${AIRFLOW_HOME}/dags
+COPY plugins ${AIRFLOW_HOME}/plugins
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
+
+ENV PYTHONPATH ${AIRFLOW_HOME}
 
 USER airflow
 
 COPY requirements.txt .
-RUN pip install --user -r requirements.txt
-
-COPY config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
-
-COPY dags ${AIRFLOW_HOME}/dags
-COPY plugins ${AIRFLOW_HOME}/plugins
-
-ENV PYTHONPATH ${AIRFLOW_HOME}
+RUN pip install --user --no-cache-dir -r requirements.txt
 
 EXPOSE 8080 5555 8793
 

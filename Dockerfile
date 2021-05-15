@@ -72,6 +72,8 @@ RUN set -ex \
     && pip install --no-cache-dir redis==${PYTHON_REDIS_VERSION} \
     && pip install --no-cache-dir celery[redis]==${CELERY_REDIS_VERSION} \
     && pip install --no-cache-dir flask_oauthlib \
+    && pip install --no-cache-dir SQLAlchemy==1.3.23 \
+    && pip install --no-cache-dir Flask-SQLAlchemy==2.4.4 \
     && pip install --no-cache-dir psycopg2-binary \
     && pip install --no-cache-dir tornado==${TORNADO_VERSION} \
     && apt-get purge --auto-remove -yqq ${buildDeps} \

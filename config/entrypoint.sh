@@ -1,45 +1,34 @@
 #!/usr/bin/env bash
 
-TRY_LOOP="20"
+# copy files in EFS volume
+cp -R /dags/* /usr/local/airflow/dags/
 
-: "${REDIS_HOST:="redis"}"
-: "${REDIS_PORT:="6379"}"
-
-: "${POSTGRES_HOST:="postgres"}"
-: "${POSTGRES_PORT:="5432"}"
-
-wait_for_port() {
-  local name="$1" host="$2" port="$3"
-  local j=0
-  while ! nc -z "$host" "$port" >/dev/null 2>&1 < /dev/null; do
-    j=$((j+1))
-    if [ $j -ge $TRY_LOOP ]; then
-      echo >&2 "$(date) - $host:$port still not reachable, giving up"
-      exit 1
-    fi
-    echo "$(date) - waiting for $name... $j/$TRY_LOOP"
-    sleep 5
-  done
-}
-
-
-wait_for_port "Postgres" "$POSTGRES_HOST" "$POSTGRES_PORT"
-
-wait_for_port "Redis" "$REDIS_HOST" "$REDIS_PORT"
-
+# start Airflow service as per 
+#the previous parameter in command container
 case "$1" in
   webserver)
-    airflow initdb
+        airflow db init \
+        && airflow users create \
+        --role Admin \
+        --username airflow \
+        --password airflow \
+        --email airflow@example.com \
+        --firstname airflow \
+        --lastname airflow 
 		sleep 5
     exec airflow webserver
     ;;
-  worker|scheduler)
+  scheduler)
     sleep 15
     exec airflow "$@"
     ;;
+  worker)
+    sleep 15
+    exec airflow celery "$@"
+    ;;
   flower)
     sleep 15
-    exec airflow "$@"
+    exec airflow celery "$@"
     ;;
   version)
     exec airflow "$@"

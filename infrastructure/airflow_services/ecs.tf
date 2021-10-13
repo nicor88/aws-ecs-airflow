@@ -34,6 +34,11 @@ resource "aws_cloudwatch_log_group" "log_group" {
   retention_in_days = 5
 }
 
+resource "aws_cloudwatch_log_group" "log_group_tasks" {
+  name = "${var.project_name}-${var.stage}-tasks"
+  retention_in_days = 90
+}
+
 resource "aws_iam_role" "ecs_task_iam_role" {
   name = "${var.project_name}-${var.stage}-ecs-task-role"
   description = "Allow ECS tasks to access AWS resources"
@@ -75,8 +80,21 @@ resource "aws_iam_policy" "ecs_task_policy" {
     },
     {
       "Action": [
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "logs:*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    },
+    {
+      "Action": [
+        "s3:*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    },
+    {
+      "Action": [
+        "elasticfilesystem:*"
       ],
       "Effect": "Allow",
       "Resource": "*"

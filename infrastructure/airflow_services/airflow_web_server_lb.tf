@@ -12,7 +12,7 @@ resource "aws_alb_target_group" "airflow_web_server" {
     target_type = "ip"
 
     health_check {
-        interval = 10
+        interval = 60
         port = 8080
         protocol = "HTTP"
         path = "/health"

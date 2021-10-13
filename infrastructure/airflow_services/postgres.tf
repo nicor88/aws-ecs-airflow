@@ -53,7 +53,7 @@ resource "aws_db_instance" "metadata_db" {
     instance_class = var.metadata_db_instance_type
     allocated_storage = 20
     engine = "postgres"
-    engine_version = "10.6"
+    engine_version = "10.17"
     skip_final_snapshot = true
     publicly_accessible = true
     db_subnet_group_name = aws_db_subnet_group.airflow_subnet_group.id

@@ -16,15 +16,16 @@ resource "aws_ecs_service" "web_server_service" {
 
     load_balancer {
         target_group_arn = aws_alb_target_group.airflow_web_server.id
-        container_name = "airflow_web_server"
+        container_name = "airflow_webserver"
         container_port = 8080
     }
 
     depends_on = [
         aws_db_instance.metadata_db,
-        aws_elasticache_cluster.celery_backend,
         aws_alb_listener.airflow_web_server,
+        aws_elasticache_cluster.celery_backend
     ]
+
 }
 
 resource "aws_ecs_service" "scheduler_service" {
@@ -42,8 +43,9 @@ resource "aws_ecs_service" "scheduler_service" {
 
     depends_on = [
         aws_db_instance.metadata_db,
-        aws_elasticache_cluster.celery_backend,
+        aws_elasticache_cluster.celery_backend
     ]
+
 }
 
 resource "aws_ecs_service" "workers_service" {
@@ -61,8 +63,9 @@ resource "aws_ecs_service" "workers_service" {
 
     depends_on = [
         aws_db_instance.metadata_db,
-        aws_elasticache_cluster.celery_backend,
+        aws_elasticache_cluster.celery_backend
     ]
+
 }
 
 resource "aws_ecs_service" "flower_service" {
@@ -80,6 +83,7 @@ resource "aws_ecs_service" "flower_service" {
 
     depends_on = [
         aws_db_instance.metadata_db,
-        aws_elasticache_cluster.celery_backend,
+        aws_elasticache_cluster.celery_backend
     ]
+
 }

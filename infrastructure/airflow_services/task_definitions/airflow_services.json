@@ -1,0 +1,77 @@
+[
+  {
+    "name": "airflow_${service_name}",
+    "image": "${ecr_image}",
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": ${port},
+        "hostPort": ${port}
+      }
+    ],
+    "command": [
+        "${command}"
+    ],
+    "environment": [
+      {
+        "name": "AIRFLOW__CORE__FERNET_KEY",
+        "value": "3wObYXFJfweF5S5fuDmIYGvfmsdSz5O__aMbicT5M1k="
+      },
+      {
+        "name": "AIRFLOW__WEBSERVER__SECRET_KEY",
+        "value": "d4d6132ca84b69d9c8966ef612ceceabf23d7d3d8259010d"
+      },
+      {
+        "name": "AIRFLOW_BASE_URL",
+        "value": "http://localhost:8080"
+      },
+      {
+        "name": "STAGE",
+        "value": "${stage}"
+      },
+      {
+        "name": "AIRFLOW__CORE__SQL_ALCHEMY_CONN",
+        "value": "postgresql+psycopg2://${db_credentials}"
+      },
+      {
+        "name": "AIRFLOW__CELERY__RESULT_BACKEND",
+        "value": "db+postgresql://${db_credentials}"
+      },
+      {
+        "name": "AIRFLOW__CELERY__BROKER_URL",
+        "value": "redis://:@${redis_url}/0"
+      },
+      {
+        "name": "AIRFLOW__CORE__EXECUTOR",
+        "value": "CeleryExecutor"
+      },
+      {
+        "name": "AIRFLOW__LOGGING__REMOTE_LOGGING",
+        "value": "True"
+      },
+      {
+        "name": "AIRFLOW__LOGGING__REMOTE_BASE_LOG_FOLDER",
+        "value": "${path_remote_logs}"
+      },
+      {
+        "name": "AIRFLOW__LOGGING__REMOTE_LOG_CONN_ID",
+        "value": "aws_default"
+      }
+    ],
+    "mountPoints": [
+      {
+          "containerPath": "${path_airflow_dags}",
+          "sourceVolume": "efs-airflow",
+          "readOnly": false
+      }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${awslogs_group}",
+            "awslogs-region": "${awslogs_region}",
+            "awslogs-stream-prefix": "${service_name}"
+        }
+    }
+  }
+]

@@ -1,10 +1,11 @@
-# airflow-ecs
+# Airflow 2.0 in AWS ECS Fargate
 Setup to run Airflow in AWS ECS containers
 
 ## Requirements
 
 ### Local
 * Docker
+* Docker Compose
 
 ### AWS
 * AWS IAM User for the infrastructure deployment, with admin permissions
@@ -34,48 +35,49 @@ Setup to run Airflow in AWS ECS containers
 If everything runs correctly you can reach Airflow navigating to [localhost:8080](http://localhost:8080).
 The current setup is based on [Celery Workers](https://airflow.apache.org/howto/executor/use-celery.html). You can monitor how many workers are currently active using Flower, visiting [localhost:5555](http://localhost:5555)
 
-## Deploy Airflow on AWS ECS
-To run Airflow in AWS we will use ECS (Elastic Container Service).
+## Deploy Airflow 2.0 on AWS ECS
+To run Airflow in AWS we will use ECS (Elastic Container Service) with components in AWS:
+* AWS ECS Fargate: run all Airflow services (Webserver, Flower, Workers and Scheduler);
+* ElasticCache (Redis): communication between Airflow Services;
+* RDS for Postgres: database MetadataDB for Airflow servies;
+* EFS: persistent storage for Airflow dags;
+* ELB: Application Load Balance for Airflow WebServer access;
+* CloudWatch: logs for container services and Airflow run tasks;
+* IAM: communications services permission for ECS containers;
+* ECR: image repository Docker for storage Airflow images. 
 
 ### Deploy Infrastructure using Terraform
 Run the following commands:
-<pre>
-make infra-init
-make infra-plan
-make infra-apply
-</pre>
 
-or alternatively
-<pre>
-cd infrastructure
-terraform get
-terraform init -upgrade;
-terraform plan
-terraform apply
-</pre>
+Exports System Variables:
 
+```sh
+export AWS_ACCOUNT=xxxxxxxxxxxxx
+export AWS_DEFAULT_REGION=us-east-1
+```
+And build all infraestructure and upload Docker Image:
+
+```sh
+bash scripts/deploy.sh airflow-dev
+```
 By default the infrastructure is deployed in `us-east-1`.
 
-When the infrastructure is provisioned (the RDS metadata DB will take a while) check the if the ECR repository is created then run:
-<pre>
-bash scripts/push_to_ecr.sh airflow-dev
-</pre>
-By default the repo name created with terraform is `airflow-dev`
-Without this command the ECS services will fail to fetch the `latest` image from ECR
+The file that runs all airflow services is entrypoint.sh located in the configs folder under the project root.
+It is parameterized according to the commands passed in tasks definitions called command.
 
-### Deploy new Airflow application
-To deploy an update version of Airflow you need to push a new container image to ECR.
-You can simply doing that running:
-<pre>
-./scripts/deploy.sh airflow-dev
-</pre>
+## Troubleshooting
 
-The deployment script will take care of:
-* push a new ECR image to your repository
-* re-deploy the new ECS services with the updated image
+If when uploading the Airflow containers an error occurs such as:
+`ResourceInitializationError: failed to invoke EFS utils commands to set up EFS volumes: stderr: b'mount.nfs4...`
+
+You will need to mount the EFS on an EC2 instance and perform the following steps:
+
+* mount the EFS on an EC2 in the same VPC;
+* access EFS and create the **/data/airflow folder** structure;
+* give full and recursive permission on the root folder, something like **chmod 777 -R /data**.
+* with this the AIRflow containers will be able to access the volume and create the necessary folders;
 
 ## TODO
-* Create Private Subnets
-* Move ECS containers to Private Subnets
-* Use ECS private Links for Private Subnets
-* Improve ECS Task and Service Role
+* refact terraform on best practices;
+* use SSM Parameter Store to keep passwords secret;
+* automatically update task definition when uploading a new Airflow version.
